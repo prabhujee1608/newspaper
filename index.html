@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="The Chronicle - A premium dynamic newspaper website with live updates, bookmarks, text-to-speech reading, and a CMS dashboard.">
+    <title>The Chronicle | Premium Global Journalism</title>
+    <!-- Google Fonts: Playfair Display for editorial headlines, Inter for readable body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header class="site-header">
+        <div class="header-top container">
+            <div class="header-meta">
+                <span id="live-date" class="meta-item">Thursday, July 9, 2026</span>
+                <span id="header-weather" class="meta-item weather-teaser">
+                    <svg class="icon icon-weather" viewBox="0 0 24 24"><path fill="currentColor" d="M12 7a5 5 0 1 1-5 5 5 5 0 0 1 5-5m0 2a3 3 0 1 0 3 3 3 3 0 0 0-3-3m0-7a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1m0 16a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1M3.51 4.93a1 1 0 0 1 1.41 0l1.42 1.42a1 1 0 1 1-1.42 1.42L3.51 6.34a1 1 0 0 1 0-1.41m14.14 14.14a1 1 0 0 1 1.42 0l1.41 1.41a1 1 0 0 1-1.41 1.42l-1.42-1.42a1 1 0 0 1 0-1.41M2 12a1 1 0 0 1 1-1h2a1 1 0 0 1 0 2H3a1 1 0 0 1-1-1m16 0a1 1 0 0 1 1-1h2a1 1 0 0 1 0 2h-2a1 1 0 0 1-1-1M4.93 20.49a1 1 0 0 1 0-1.41l1.42-1.42a1 1 0 1 1 1.42 1.42l-1.42 1.42a1 1 0 0 1-1.42 0M19.07 3.51a1 1 0 0 1 0 1.42l-1.42 1.42a1 1 0 1 1-1.42-1.42l1.42-1.42a1 1 0 0 1 1.42 0Z"/></svg>
+                    <span id="weather-summary">New York, 24°C Sunny</span>
+                </span>
+            </div>
+            <div class="header-logo">
+                <a href="#" id="brand-logo" class="logo-link">JAN JAGRITI NETWORK</a>
+            </div>
+            <div class="header-actions">
+                <button id="theme-toggle" class="btn-icon" aria-label="Toggle Dark/Light Mode">
+                    <!-- Sun Icon -->
+                    <svg class="icon icon-sun" viewBox="0 0 24 24"><path fill="currentColor" d="M12 7a5 5 0 1 1-5 5 5 5 0 0 1 5-5m0 2a3 3 0 1 0 3 3 3 3 0 0 0-3-3m0-7a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1m0 16a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1M3.51 4.93a1 1 0 0 1 1.41 0l1.42 1.42a1 1 0 1 1-1.42 1.42L3.51 6.34a1 1 0 0 1 0-1.41m14.14 14.14a1 1 0 0 1 1.42 0l1.41 1.41a1 1 0 0 1-1.41 1.42l-1.42-1.42a1 1 0 0 1 0-1.41M2 12a1 1 0 0 1 1-1h2a1 1 0 0 1 0 2H3a1 1 0 0 1-1-1m16 0a1 1 0 0 1 1-1h2a1 1 0 0 1 0 2h-2a1 1 0 0 1-1-1M4.93 20.49a1 1 0 0 1 0-1.41l1.42-1.42a1 1 0 1 1 1.42 1.42l-1.42 1.42a1 1 0 0 1-1.42 0M19.07 3.51a1 1 0 0 1 0 1.42l-1.42 1.42a1 1 0 1 1-1.42-1.42l1.42-1.42a1 1 0 0 1 1.42 0Z"/></svg>
+                    <!-- Moon Icon -->
+                    <svg class="icon icon-moon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9 9.75 9.75 0 0 0-.67-3.41a3 3 0 1 1-5.4-5.4A9.9 9.9 0 0 0 12 3m0 2a7.87 7.87 0 0 1 5.07 1.86a5 5 0 0 0 5.07 5.07A8 8 0 1 1 12 5Z"/></svg>
+                </button>
+                <button id="nav-bookmarks" class="btn btn-secondary">
+                    <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H7a2 2 0 0 0-2 2v16l7-3l7 3V5a2 2 0 0 0-2-2m0 15l-5-2.18L7 18V5h10Z"/></svg>
+                    <span>Bookmarks</span>
+                </button>
+                <button id="nav-write" class="btn btn-primary">
+                    <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14.06 9l.94.94L5.92 19H5v-.92L14.06 9m3.6-6c-.25 0-.51.1-.7.29l-1.83 1.83l3.75 3.75l1.83-1.83c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3.02 17.25V21h3.75L17.81 9.94l-3.75-3.75Z"/></svg>
+                    <span>Publish</span>
+                </button>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Breaking News Banner -->
+    <section class="breaking-banner">
+        <div class="container breaking-flex">
+            <span class="breaking-label">BREAKING NEWS</span>
+            <div class="breaking-ticker">
+                <div id="ticker-content" class="ticker-track">
+                    ⚡ Global climate summit reaches historic clean energy pact. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 📈 Stock markets hit all-time highs amid tech rally. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🚀 Quantum computer chips enter commercial manufacturing phase.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Navigation / Category Bar -->
+    <nav class="category-nav">
+        <div class="container nav-flex">
+            <div id="category-tabs" class="nav-links">
+                <button class="nav-tab active" data-category="all">All News</button>
+                <button class="nav-tab" data-category="world">World</button>
+                <button class="nav-tab" data-category="technology">Technology</button>
+                <button class="nav-tab" data-category="finance">Finance</button>
+                <button class="nav-tab" data-category="environment">Environment</button>
+                <button class="nav-tab" data-category="lifestyle">Lifestyle</button>
+            </div>
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Search news articles..." aria-label="Search articles">
+                <button id="search-clear-btn" class="search-clear" aria-label="Clear search" style="display: none;">&times;</button>
+                <svg class="icon search-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5l-1.5 1.5l-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16A6.5 6.5 0 0 1 3 9.5A6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14S14 12 14 9.5S12 5 9.5 5Z"/></svg>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container Layout -->
+    <main class="main-body container">
+        <div class="grid-layout">
+            
+            <!-- Dynamic Content Area -->
+            <section id="view-container" class="main-content">
+                
+                <!-- FEED VIEW (Loaded by JS) -->
+                <div id="view-feed" class="view-panel active">
+                    <div id="hero-article-container"></div>
+                    <div class="section-divider">
+                        <span>Latest Stories</span>
+                    </div>
+                    <div id="articles-grid" class="articles-grid-container"></div>
+                </div>
+
+                <!-- BOOKMARKS VIEW -->
+                <div id="view-bookmarks" class="view-panel">
+                    <div class="panel-header">
+                        <button class="btn-back btn-icon" aria-label="Back to home">
+                            <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8l8 8l1.41-1.41L7.83 13H20v-2Z"/></svg>
+                        </button>
+                        <h2>Your Bookmarked Articles</h2>
+                    </div>
+                    <div id="bookmarks-grid" class="articles-grid-container">
+                        <!-- Bookmarked cards rendered here -->
+                    </div>
+                    <div id="bookmarks-empty" class="empty-state">
+                        <svg class="empty-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H7a2 2 0 0 0-2 2v16l7-3l7 3V5a2 2 0 0 0-2-2m0 15l-5-2.18L7 18V5h10Z"/></svg>
+                        <p>You haven't bookmarked any articles yet. Read articles and bookmark them to find them here.</p>
+                        <button class="btn btn-primary go-home-btn">Browse News</button>
+                    </div>
+                </div>
+
+                <!-- ABOUT US VIEW -->
+                <div id="view-about" class="view-panel">
+                    <div class="panel-header">
+                        <button class="btn-back btn-icon" aria-label="Back to home">
+                            <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8l8 8l1.41-1.41L7.83 13H20v-2Z"/></svg>
+                        </button>
+                        <h2>About Us</h2>
+                    </div>
+                    <div class="legal-card" id="about-content">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- PRIVACY POLICY VIEW -->
+                <div id="view-privacy" class="view-panel">
+                    <div class="panel-header">
+                        <button class="btn-back btn-icon" aria-label="Back to home">
+                            <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8l8 8l1.41-1.41L7.83 13H20v-2Z"/></svg>
+                        </button>
+                        <h2>Privacy Policy</h2>
+                    </div>
+                    <div class="legal-card" id="privacy-content">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- TERMS OF SERVICE VIEW -->
+                <div id="view-terms" class="view-panel">
+                    <div class="panel-header">
+                        <button class="btn-back btn-icon" aria-label="Back to home">
+                            <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8l8 8l1.41-1.41L7.83 13H20v-2Z"/></svg>
+                        </button>
+                        <h2>Terms of Service</h2>
+                    </div>
+                    <div class="legal-card" id="terms-content">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+
+
+                <!-- ADMIN CMS VIEW -->
+                <div id="view-admin" class="view-panel">
+                    <div class="panel-header">
+                        <button class="btn-back btn-icon" aria-label="Back to home">
+                            <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8l8 8l1.41-1.41L7.83 13H20v-2Z"/></svg>
+                        </button>
+                        <h2>Publishing Dashboard</h2>
+                    </div>
+                    <div class="cms-card">
+                        <p class="cms-intro">Compose and publish news articles instantly. Published articles will go live immediately on the homepage feed and categories.</p>
+                        <form id="cms-publish-form" class="cms-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cms-title">Article Title</label>
+                                    <input type="text" id="cms-title" required placeholder="e.g. Breakout Research Shows Renewable Grid Breakthrough">
+                                </div>
+                            </div>
+                            <div class="form-row flex-row">
+                                <div class="form-group flex-1">
+                                    <label for="cms-author">Author Name</label>
+                                    <input type="text" id="cms-author" required placeholder="e.g. Helena Vance">
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label for="cms-category">Category</label>
+                                    <select id="cms-category" required>
+                                        <option value="" disabled selected>Select category</option>
+                                        <option value="world">World</option>
+                                        <option value="technology">Technology</option>
+                                        <option value="finance">Finance</option>
+                                        <option value="environment">Environment</option>
+                                        <option value="lifestyle">Lifestyle</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cms-abstract">Short Abstract</label>
+                                    <input type="text" id="cms-abstract" required placeholder="A brief one-sentence summary of the article (visible on cards)">
+                                </div>
+                            </div>
+                            <div class="form-row flex-row">
+                                <div class="form-group flex-1">
+                                    <label for="cms-image-upload">Upload Cover Image</label>
+                                    <input type="file" id="cms-image-upload" accept="image/*" required>
+                                    <div id="image-preview-container" style="margin-top: 10px; display: none;">
+                                        <img id="image-preview" src="" alt="Preview" style="max-height: 120px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                                    </div>
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label for="cms-tags">Tag</label>
+                                    <input type="text" id="cms-tags" required placeholder="e.g. GLOBAL ACCORD, BREAKTHROUGH">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cms-content">Article Content (HTML formatting allowed)</label>
+                                    <textarea id="cms-content" required rows="12" placeholder="Write full article body here. Use multiple paragraphs. You can use standard <p>, <strong>, and <em> HTML tags."></textarea>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary btn-large">
+                                    <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2l-15 2v7z"/></svg>
+                                    <span>Publish Article</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ARTICLE DETAIL VIEW -->
+                <div id="view-article" class="view-panel">
+                    <div class="article-reader-toolbar">
+                        <button class="btn-back btn btn-secondary">
+                            <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8l8 8l1.41-1.41L7.83 13H20v-2Z"/></svg>
+                            <span>Feed</span>
+                        </button>
+                        <div class="toolbar-right">
+                            <!-- Bookmark button inside reader -->
+                            <button id="reader-bookmark-btn" class="btn btn-secondary btn-icon-label">
+                                <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H7a2 2 0 0 0-2 2v16l7-3l7 3V5a2 2 0 0 0-2-2m0 15l-5-2.18L7 18V5h10Z"/></svg>
+                                <span>Bookmark</span>
+                            </button>
+                            <!-- Font sizing controls -->
+                            <div class="font-sizer">
+                                <button id="font-dec" class="btn-icon" title="Decrease Text Size">A-</button>
+                                <span class="font-label">Text Size</span>
+                                <button id="font-inc" class="btn-icon" title="Increase Text Size">A+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Text-to-Speech Widget -->
+                    <div class="tts-player">
+                        <div class="tts-controls">
+                            <button id="tts-play-btn" class="tts-btn" title="Listen to Article">
+                                <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7L8 5z"/></svg>
+                                <span>Listen</span>
+                            </button>
+                            <button id="tts-pause-btn" class="tts-btn" title="Pause Speech" style="display: none;">
+                                <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                                <span>Pause</span>
+                            </button>
+                            <button id="tts-stop-btn" class="tts-btn" title="Stop Speech" style="display: none;">
+                                <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M6 6h12v12H6z"/></svg>
+                                <span>Stop</span>
+                            </button>
+                            <div class="voice-selector-wrapper" id="voice-selection-container" style="display: none;">
+                                <select id="tts-voice-select" aria-label="Select Narration Voice">
+                                    <!-- Voice options loaded dynamically -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="tts-status" id="tts-status-text">Audio narrator ready</div>
+                    </div>
+
+                    <!-- Article Core Content -->
+                    <article class="news-article" id="active-article-content">
+                        <!-- Loaded dynamically by JS -->
+                    </article>
+
+                    <!-- Dynamic Comments Section -->
+                    <section class="comments-section">
+                        <h3>Discussion Board (<span id="comments-count">0</span>)</h3>
+                        
+                        <form id="comment-submit-form" class="comment-form">
+                            <div class="comment-form-row">
+                                <input type="text" id="comment-author" required placeholder="Your Name" aria-label="Your Name">
+                            </div>
+                            <div class="comment-form-row">
+                                <textarea id="comment-text" required rows="3" placeholder="Join the discussion... Be respectful." aria-label="Comment text"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Post Comment</button>
+                        </form>
+
+                        <div id="comments-list" class="comments-list">
+                            <!-- Comments populated dynamically -->
+                        </div>
+                    </section>
+                </div>
+
+            </section>
+
+            <!-- Sidebar Column -->
+            <aside class="sidebar">
+
+                <!-- Weather Card Widget -->
+                <div class="widget-card weather-widget">
+                    <h3 class="widget-title">Regional Weather</h3>
+                    <div class="weather-box">
+                        <div class="weather-main">
+                            <div id="weather-detail-icon" class="weather-detail-icon">
+                                <!-- Dynamic SVG Weather Icon loaded by JS -->
+                            </div>
+                            <div class="weather-temp-info">
+                                <span id="weather-detail-temp" class="weather-main-temp">24°C</span>
+                                <span id="weather-detail-desc" class="weather-main-desc">Sunny Skies</span>
+                            </div>
+                        </div>
+                        <div class="weather-details-grid">
+                            <div class="weather-detail-item">
+                                <span class="weather-detail-label">Humidity</span>
+                                <span id="weather-detail-humidity" class="weather-detail-val">45%</span>
+                            </div>
+                            <div class="weather-detail-item">
+                                <span class="weather-detail-label">Wind</span>
+                                <span id="weather-detail-wind" class="weather-detail-val">12 km/h</span>
+                            </div>
+                            <div class="weather-detail-item">
+                                <span class="weather-detail-label">Location</span>
+                                <select id="weather-city-selector" aria-label="Change Weather City">
+                                    <option value="new_delhi" selected>New Delhi, IND</option>
+                                    <option value="mumbai">Mumbai, IND</option>
+                                    <option value="bengaluru">Bengaluru, IND</option>
+                                    <option value="kolkata">Kolkata, IND</option>
+                                    <option value="chennai">Chennai, IND</option>
+                                    <option value="hyderabad">Hyderabad, IND</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advertisement Card -->
+                <div class="widget-card ad-widget" style="border: 1px dashed var(--accent); background-color: var(--bg-widget); text-align: center; padding: 20px; margin-bottom: 20px;">
+                    <span style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 10px;">SPONSORED ADVERTISEMENT</span>
+                    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <h4 style="font-family: var(--font-serif); font-size: 1.2rem; color: var(--gold); margin-bottom: 8px;">BOOK ADS SPACE</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 15px;">Promote your products or services directly to Jan Jagriti Network readers.</p>
+                        <div style="font-size: 0.85rem; font-weight: bold; color: var(--text-primary); margin-bottom: 15px;">
+                            Call: 6204718308<br>
+                            Email: janjagriti06@gmail.com
+                        </div>
+                        <a href="mailto:janjagriti06@gmail.com?subject=Ad%20Space%20Inquiry" class="btn btn-primary btn-full" style="font-size: 0.75rem; padding: 8px 12px; display: inline-flex; justify-content: center; align-items: center;">Contact for Ads</a>
+                    </div>
+                </div>
+
+                <!-- Latest Headlines Widget -->
+                <div class="widget-card headlines-widget">
+                    <h3 class="widget-title">Latest Headlines</h3>
+                    <ul class="headlines-list" id="latest-headlines-list" style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+                        <!-- Populated by JS -->
+                    </ul>
+                </div>
+
+                <!-- Trending / Editor's Pick Column -->
+                <div class="widget-card trending-widget">
+                    <h3 class="widget-title">Trending Headlines</h3>
+                    <ol class="trending-list" id="trending-headlines-list">
+                        <!-- Loaded dynamically by JS -->
+                    </ol>
+                </div>
+
+
+
+            </aside>
+
+        </div>
+    </main>
+
+    <!-- Footer Area -->
+    <footer class="site-footer">
+        <div class="footer-top container">
+            <div class="footer-info">
+                <h3>JAN JAGRITI NETWORK</h3>
+                <p>Jan Jagriti Network is a premier digital news platform committed to delivering real-time, unbiased, and comprehensive news updates. We cover national affairs, technology breakthroughs, global policies, and community journalism in Hindi and English.</p>
+            </div>
+            <div class="footer-links-grid">
+                <div class="footer-links-col">
+                    <h4>Categories</h4>
+                    <ul>
+                        <li><a href="#" class="cat-link" data-cat="world">World Affairs</a></li>
+                        <li><a href="#" class="cat-link" data-cat="technology">Technology & AI</a></li>
+                        <li><a href="#" class="cat-link" data-cat="finance">Economy & Markets</a></li>
+                        <li><a href="#" class="cat-link" data-cat="environment">Climate & Science</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links-col">
+                    <h4>Company & Legal</h4>
+                    <ul>
+                        <li><a href="#" id="footer-about-btn">About Us</a></li>
+                        <li><a href="#" id="footer-privacy-btn">Privacy Policy</a></li>
+                        <li><a href="#" id="footer-terms-btn">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links-col">
+                    <h4>Contact Us</h4>
+                    <ul>
+                        <li><a href="tel:+916204718308">Call: 6204718308</a></li>
+                        <li><a href="mailto:janjagriti06@gmail.com">Email: janjagriti06@gmail.com</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom container">
+            <p>&copy; 2026 Jan Jagriti Network. All rights reserved. Designed for premium reader experiences.</p>
+        </div>
+    </footer>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Main Logic Script -->
+    <script src="app.js"></script>
+</body>
+</html>
