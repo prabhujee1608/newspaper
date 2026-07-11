@@ -35,13 +35,22 @@ app.use('/api/', generalLimiter);
 function authenticateAdmin(req, res, next) {
     const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Unauthorized: Missing or malformed admin token' });
+        return res.status(401).json({ error: 'Unauthorized: Missing or malformed token' });
     }
     const token = authHeader.split(' ')[1];
-    if (token !== 'admin-secret-session-token') {
-        return res.status(403).json({ error: 'Forbidden: Invalid admin token credentials' });
+    
+    if (token === 'admin-secret-session-token') {
+        req.userRole = 'admin';
+        next();
+    } else if (token === 'editor-secret-session-token') {
+        req.userRole = 'editor';
+        if (req.method === 'DELETE') {
+            return res.status(403).json({ error: 'Forbidden: Admin role required for deletion.' });
+        }
+        next();
+    } else {
+        return res.status(403).json({ error: 'Forbidden: Invalid token credentials' });
     }
-    next();
 }
 
 // Initialize database file with premium seed articles if it doesn't exist

@@ -528,6 +528,69 @@ function renderArticlesList() {
         }
     }
 
+    // Render Category Spotlights at the bottom of the feed if viewing "all" and search is empty
+    if (currentCategory === "all" && searchQuery === "") {
+        const spotlightCategories = ["India", "politics", "technology", "sports"];
+        let spotlightsHTML = "";
+        
+        spotlightCategories.forEach(cat => {
+            const catArticles = articles.filter(art => art.category.toLowerCase() === cat.toLowerCase()).slice(0, 3);
+            if (catArticles.length > 0) {
+                spotlightsHTML += `
+                    <div class="category-spotlight" style="grid-column: span 2; width: 100%; margin-top: 40px; border-top: 2px solid var(--border-color); padding-top: 25px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="font-family: var(--font-serif); font-size: 1.4rem; font-weight: 800; border-bottom: 3px solid var(--accent); padding-bottom: 4px; color: var(--text-main); margin: 0; text-transform: capitalize;">${cat === 'India' ? 'India News' : cat} Spotlight</h3>
+                            <button class="btn btn-secondary view-cat-btn" data-category="${cat.toLowerCase()}" style="padding: 4px 10px; font-size: 0.8rem; cursor: pointer;">View All</button>
+                        </div>
+                        <div class="spotlight-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+                            ${catArticles.map(art => {
+                                const readTime = Math.ceil(art.content.replace(/<[^>]*>/g, '').split(/\s+/).length / 200);
+                                return `
+                                    <div class="news-card" data-id="${art.id}">
+                                        <div class="card-img-wrap">
+                                            <span class="badge badge-${art.category} card-badge">${art.category}</span>
+                                            <img src="${art.image}" alt="${art.title}">
+                                        </div>
+                                        <div class="card-details" style="display: flex; flex-direction: column; flex: 1;">
+                                            <div class="card-meta-line">
+                                                <span>${art.date}</span> • <span>${readTime} min read</span>
+                                            </div>
+                                            <h4 class="card-headline">
+                                                <a href="#" class="view-article-link" data-id="${art.id}">${highlightText(art.title)}</a>
+                                            </h4>
+                                            <p class="card-excerpt">${highlightText(art.abstract)}</p>
+                                            <div class="card-footer" style="margin-top: auto;">
+                                                <span class="card-author">By ${highlightText(art.author)}</span>
+                                                <a href="#" class="card-read-more view-article-link" data-id="${art.id}">
+                                                    <span>Read</span>
+                                                    <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M10 6L8.59 7.41L13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join("")}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        gridContainer.innerHTML += spotlightsHTML;
+        
+        // Bind Category View All buttons
+        document.querySelectorAll(".view-cat-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const category = btn.getAttribute("data-category");
+                currentCategory = category;
+                displayedArticlesCount = 6;
+                resetSearch();
+                updateCategoryTabHighlight();
+                switchView("feed");
+            });
+        });
+    }
+
     // Attach click listeners to all dynamically created reading links
     document.querySelectorAll(".view-article-link").forEach(link => {
         link.addEventListener("click", (e) => {
@@ -1026,9 +1089,15 @@ function initAdminPanel() {
 
     // Check if already logged in
     const checkLoginStatus = () => {
+        const userLabel = document.getElementById("cms-user-role-label");
+        const role = sessionStorage.getItem("admin_role");
+        
         if (sessionStorage.getItem("admin_logged_in") === "true") {
             loginPanel.style.display = "none";
             publisherPanel.style.display = "block";
+            if (userLabel) {
+                userLabel.textContent = role === "admin" ? "Administrator Dashboard" : "Editor Dashboard";
+            }
             renderAdminArticlesManager();
         } else {
             loginPanel.style.display = "block";
@@ -1056,17 +1125,29 @@ function initAdminPanel() {
             const usernameInput = document.getElementById("cms-username");
             const passwordInput = document.getElementById("cms-password");
             
-            if (usernameInput.value.trim() === "admin" && passwordInput.value === "admin123") {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            
+            if (username === "admin" && password === "admin123") {
                 sessionStorage.setItem("admin_logged_in", "true");
+                sessionStorage.setItem("admin_role", "admin");
                 sessionStorage.setItem("admin_token", "admin-secret-session-token");
                 adminToken = "admin-secret-session-token";
-                showToast("Logged in successfully!", "success");
+                showToast("Logged in as Administrator!", "success");
                 checkLoginStatus();
-                // Clear inputs
+                usernameInput.value = "";
+                passwordInput.value = "";
+            } else if (username === "editor" && password === "editor123") {
+                sessionStorage.setItem("admin_logged_in", "true");
+                sessionStorage.setItem("admin_role", "editor");
+                sessionStorage.setItem("admin_token", "editor-secret-session-token");
+                adminToken = "editor-secret-session-token";
+                showToast("Logged in as Editor!", "success");
+                checkLoginStatus();
                 usernameInput.value = "";
                 passwordInput.value = "";
             } else {
-                showToast("Invalid admin credentials!", "alert");
+                showToast("Invalid login credentials!", "alert");
             }
         });
     }
@@ -1166,17 +1247,25 @@ function renderAdminArticlesManager() {
         return;
     }
 
-    listContainer.innerHTML = articles.map(art => `
-        <div class="cms-mgr-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); gap: 15px;">
-            <div style="flex: 1; min-width: 0;">
-                <h4 style="font-family: var(--font-serif); font-size: 1rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${art.title}</h4>
-                <div style="font-size: 0.8rem; color: var(--text-secondary);">
-                    <span>Category: <strong>${art.category}</strong></span> | <span>Author: ${art.author}</span>
+    const role = sessionStorage.getItem("admin_role");
+    
+    listContainer.innerHTML = articles.map(art => {
+        const deleteButtonHTML = role === "admin" 
+            ? `<button class="btn btn-secondary delete-art-btn" data-id="${art.id}" style="color: #ff4a4a; border-color: rgba(255, 74, 74, 0.3); padding: 4px 10px; font-size: 0.85rem; cursor: pointer;">Delete</button>`
+            : `<button class="btn btn-secondary" style="color: var(--text-muted); border-color: var(--border-color); padding: 4px 10px; font-size: 0.85rem; cursor: not-allowed; opacity: 0.5;" disabled title="Only Administrators can delete articles">Delete</button>`;
+
+        return `
+            <div class="cms-mgr-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); gap: 15px;">
+                <div style="flex: 1; min-width: 0;">
+                    <h4 style="font-family: var(--font-serif); font-size: 1rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${art.title}</h4>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                        <span>Category: <strong>${art.category}</strong></span> | <span>Author: ${art.author}</span>
+                    </div>
                 </div>
+                ${deleteButtonHTML}
             </div>
-            <button class="btn btn-secondary delete-art-btn" data-id="${art.id}" style="color: #ff4a4a; border-color: rgba(255, 74, 74, 0.3); padding: 4px 10px; font-size: 0.85rem; cursor: pointer;">Delete</button>
-        </div>
-    `).join("");
+        `;
+    }).join("");
 
     // Bind delete events
     document.querySelectorAll(".delete-art-btn").forEach(btn => {
@@ -1429,7 +1518,7 @@ async function fetchLiveWeather(lat, lon, cityName) {
     if (descEl) descEl.textContent = "Updating...";
 
     try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=sunrise,sunset&timezone=auto`;
         const response = await fetch(url);
         if (!response.ok) throw new Error("Weather request failed");
         const data = await response.json();
@@ -1452,6 +1541,28 @@ async function fetchLiveWeather(lat, lon, cityName) {
             }
             if (iconContainer) {
                 iconContainer.innerHTML = getWeatherSVG(weatherInfo.icon);
+            }
+
+            // Update Sunrise/Sunset
+            if (data.daily && data.daily.sunrise && data.daily.sunset) {
+                const sunriseRaw = data.daily.sunrise[0].split('T')[1];
+                const sunsetRaw = data.daily.sunset[0].split('T')[1];
+                
+                const formatTime12h = (timeStr) => {
+                    if (!timeStr) return "--:--";
+                    const parts = timeStr.split(':');
+                    let hours = parseInt(parts[0], 10);
+                    const minutes = parts[1];
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    hours = hours % 12;
+                    hours = hours ? hours : 12;
+                    return `${hours}:${minutes} ${ampm}`;
+                };
+
+                const sunriseEl = document.getElementById("weather-detail-sunrise");
+                const sunsetEl = document.getElementById("weather-detail-sunset");
+                if (sunriseEl) sunriseEl.textContent = formatTime12h(sunriseRaw);
+                if (sunsetEl) sunsetEl.textContent = formatTime12h(sunsetRaw);
             }
         }
     } catch (err) {

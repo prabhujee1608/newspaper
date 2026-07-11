@@ -31,10 +31,12 @@
                     <span id="weather-summary">New York, 24°C Sunny</span>
                 </span>
             </div>
-            <div class="header-logo">
-
-                <a href="#" id="brand-logo" class="logo-link">JAN JAGRITI NETWORK</a>
-
+            <div class="header-logo" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <a href="#" id="brand-logo" class="logo-link" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
+                    <img src="assets/logo.jpg" alt="Jan Jagriti Network Logo" style="height: 55px; width: auto; border-radius: 50%; border: 2px solid var(--accent); transition: transform 0.3s ease;">
+                    <span style="font-family: var(--font-serif); font-size: 2.25rem; font-weight: 800; letter-spacing: 0.05em; color: var(--text-primary);">JAN JAGRITI NETWORK</span>
+                </a>
+                <span class="site-slogan" style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.18em; color: var(--accent); margin-top: -2px;">Voice of Truth, Voice of the People</span>
             </div>
             <div class="header-actions">
                 <button id="theme-toggle" class="btn-icon" aria-label="Toggle Dark/Light Mode">
@@ -246,7 +248,7 @@
                     <div id="cms-publisher-panel" class="cms-card" style="display: none;">
                         <div class="publisher-header"
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; gap: 15px;">
-                            <span style="font-size: 0.95rem;">Logged in as <strong style="color: var(--accent);">Editor
+                            <span style="font-size: 0.95rem;">Logged in as <strong id="cms-user-role-label" style="color: var(--accent);">Editor
                                     Dashboard</strong></span>
                             <button id="cms-logout-btn" class="btn btn-secondary"
                                 style="padding: 6px 12px; font-size: 0.85rem;">Log Out</button>
@@ -452,6 +454,14 @@
                                 <span class="weather-detail-label">Wind</span>
                                 <span id="weather-detail-wind" class="weather-detail-val">-- km/h</span>
                             </div>
+                            <div class="weather-detail-item">
+                                <span class="weather-detail-label">Sunrise</span>
+                                <span id="weather-detail-sunrise" class="weather-detail-val">--:--</span>
+                            </div>
+                            <div class="weather-detail-item">
+                                <span class="weather-detail-label">Sunset</span>
+                                <span id="weather-detail-sunset" class="weather-detail-val">--:--</span>
+                            </div>
                             <div class="weather-detail-item"
                                 style="grid-column: span 2; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                                 <span class="weather-detail-label">Location</span>
@@ -476,6 +486,25 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Follow Us Widget -->
+                <div class="widget-card social-widget" style="padding: 20px; background-color: var(--bg-widget); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin-bottom: 20px;">
+                    <h3 class="widget-title" style="font-family: var(--font-serif); font-size: 1.15rem; margin-bottom: 15px; border-bottom: 2px solid var(--accent); padding-bottom: 5px; display: inline-block; color: var(--text-primary);">Follow Us</h3>
+                    <div class="social-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <a href="https://youtube.com/@janjagritinetwork" target="_blank" class="btn btn-secondary" style="font-size: 0.8rem; padding: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border-color: rgba(239, 68, 68, 0.3); text-decoration: none;">
+                            <span>YouTube</span>
+                        </a>
+                        <a href="https://facebook.com/janjagritinetwork" target="_blank" class="btn btn-secondary" style="font-size: 0.8rem; padding: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border-color: rgba(59, 130, 246, 0.3); text-decoration: none;">
+                            <span>Facebook</span>
+                        </a>
+                        <a href="https://twitter.com/janjagritinet" target="_blank" class="btn btn-secondary" style="font-size: 0.8rem; padding: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border-color: rgba(15, 23, 42, 0.3); text-decoration: none;">
+                            <span>X / Twitter</span>
+                        </a>
+                        <a href="https://instagram.com/janjagritinetwork" target="_blank" class="btn btn-secondary" style="font-size: 0.8rem; padding: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border-color: rgba(236, 72, 153, 0.3); text-decoration: none;">
+                            <span>Instagram</span>
+                        </a>
                     </div>
                 </div>
 
@@ -561,6 +590,15 @@
                     <ul>
                         <li><a href="tel:+916204718308">Call: 6204718308</a></li>
                         <li><a href="mailto:janjagriti06@gmail.com">Email: janjagriti06@gmail.com</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links-col">
+                    <h4>Follow Us</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 6px;">
+                        <li><a href="https://youtube.com/@janjagritinetwork" target="_blank">YouTube</a></li>
+                        <li><a href="https://facebook.com/janjagritinetwork" target="_blank">Facebook</a></li>
+                        <li><a href="https://twitter.com/janjagritinet" target="_blank">X (Twitter)</a></li>
+                        <li><a href="https://instagram.com/janjagritinetwork" target="_blank">Instagram</a></li>
                     </ul>
                 </div>
             </div>
