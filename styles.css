@@ -1597,7 +1597,7 @@ html[data-theme="dark"] .newsletter-icon-wrap {
 
 .footer-top {
     display: grid;
-    grid-template-columns: 1.5fr 3fr;
+    grid-template-columns: 1.5fr 3.5fr;
     gap: 40px;
     margin-bottom: 40px;
 }
@@ -1619,7 +1619,7 @@ html[data-theme="dark"] .newsletter-icon-wrap {
 
 .footer-links-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
 }
 
@@ -1738,6 +1738,17 @@ html[data-theme="dark"] .newsletter-icon-wrap {
 }
 
 @media (max-width: 768px) {
+    .brand-logo-img {
+        height: 70px;
+    }
+    .brand-logo-text {
+        font-size: 1.8rem;
+    }
+    .site-slogan {
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+    }
+
     .header-top {
         flex-direction: column;
         text-align: center;
@@ -1764,7 +1775,12 @@ html[data-theme="dark"] .newsletter-icon-wrap {
 
     .nav-links {
         width: 100%;
-        justify-content: center;
+        justify-content: flex-start;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        padding: 5px 15px;
+        gap: 12px;
     }
 
     .search-box {
@@ -1798,6 +1814,50 @@ html[data-theme="dark"] .newsletter-icon-wrap {
 
     .article-title-hero {
         font-size: 2.25rem;
+    }
+
+    .footer-top {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        text-align: center;
+    }
+
+    .footer-info p {
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    .footer-links-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+        text-align: left;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-logo-img {
+        height: 55px;
+    }
+    .brand-logo-text {
+        font-size: 1.35rem;
+    }
+    .site-slogan {
+        font-size: 0.6rem;
+        letter-spacing: 0.06em;
+    }
+
+    .footer-links-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .footer-links-col ul {
+        align-items: center;
+    }
+
+    .nav-links {
+        padding: 5px 10px;
+        gap: 8px;
     }
 }
 
@@ -2137,4 +2197,103 @@ html[data-theme="dark"] .newsletter-icon-wrap {
     font-size: 0.9rem;
     color: var(--text-secondary);
     margin-bottom: 12px;
+}
+
+/* ==========================================================================
+   Brand Header Logo Adjustments
+   ========================================================================== */
+.header-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Closer gap as requested */
+    text-decoration: none;
+}
+
+.brand-logo-img {
+    height: 95px; /* Enlarged logo image */
+    width: auto;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    transition: transform 0.3s ease, height 0.3s ease;
+}
+
+.brand-logo-img:hover {
+    transform: rotate(5deg) scale(1.02);
+}
+
+.brand-logo-text {
+    font-family: var(--font-serif);
+    font-size: 2.5rem; /* Enlarged heading text */
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: var(--text-primary);
+    transition: font-size 0.3s ease;
+}
+
+.site-slogan {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: #b91c1c;
+    margin-top: 2px;
+}
+
+/* ==========================================================================
+   CMS Metrics Audience Dashboard
+   ========================================================================== */
+.cms-metrics-container {
+    background: rgba(15, 23, 42, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    background-color: var(--bg-main);
+    transition: background-color var(--transition-normal);
+}
+.theme-dark .cms-metrics-container {
+    background: rgba(255, 255, 255, 0.01);
+}
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+.metric-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--radius-sm);
+    padding: 15px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    box-shadow: var(--shadow-sm);
+    transition: background-color var(--transition-normal);
+}
+.metric-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--accent);
+}
+.metric-spotlight-card {
+    background: rgba(185, 28, 28, 0.04);
+    border: 1px solid rgba(185, 28, 28, 0.12);
+    border-radius: var(--radius-sm);
+    padding: 10px 15px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
 }

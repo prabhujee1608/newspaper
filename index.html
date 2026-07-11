@@ -31,12 +31,12 @@
                     <span id="weather-summary">New York, 24°C Sunny</span>
                 </span>
             </div>
-            <div class="header-logo" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                <a href="#" id="brand-logo" class="logo-link" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
-                    <img src="assets/logo.jpg" alt="Jan Jagriti Network Logo" style="height: 70px; width: auto; border-radius: 50%; border: 2px solid var(--accent); transition: transform 0.3s ease;">
-                    <span style="font-family: var(--font-serif); font-size: 2.25rem; font-weight: 800; letter-spacing: 0.05em; color: var(--text-primary);">JAN JAGRITI NETWORK</span>
+            <div class="header-logo">
+                <a href="#" id="brand-logo" class="logo-link">
+                    <img src="assets/logo.jpg" alt="Jan Jagriti Network Logo" class="brand-logo-img">
+                    <span class="brand-logo-text">JAN JAGRITI NETWORK</span>
                 </a>
-                <span class="site-slogan" style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.18em; color: #b91c1c; margin-top: 2px;">• Voice of Truth &nbsp;•&nbsp; Voice of the People •</span>
+                <span class="site-slogan">• Voice of Truth &nbsp;•&nbsp; Voice of the People •</span>
             </div>
             <div class="header-actions">
                 <button id="theme-toggle" class="btn-icon" aria-label="Toggle Dark/Light Mode">
@@ -233,19 +233,18 @@
 
                     <!-- Login Panel -->
                     <div id="cms-login-panel" class="cms-card">
-                        <p class="cms-intro">Log in with your admin credentials to publish and manage news stories on
-                            Jan Jagriti Network.</p>
+                        <p class="cms-intro">Log in with your admin or editor credentials to publish and manage news stories on the site.</p>
                         <form id="cms-login-form" class="cms-form">
                             <div class="form-group" style="margin-bottom: 15px;">
-                                <label for="cms-username">Admin Username</label>
-                                <input type="text" id="cms-username" required placeholder="Enter username (e.g. omkarnathprabhujee16)"
-                                    style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); color: var(--text-main);">
+                                <label for="cms-username">Username</label>
+                                <input type="text" id="cms-username" required placeholder="Enter Admin Username"
+                                    style="width: 100%; padding: 10px; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary);">
                             </div>
                             <div class="form-group" style="margin-bottom: 20px;">
                                 <label for="cms-password">Password</label>
                                 <input type="password" id="cms-password" required
-                                    placeholder="Enter password (e.g. 123456@Omkar)"
-                                    style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); color: var(--text-main);">
+                                    placeholder="Enter Password"
+                                    style="width: 100%; padding: 10px; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary);">
                             </div>
                             <div class="form-actions">
                                 <button type="submit" class="btn btn-primary btn-large"
@@ -268,6 +267,36 @@
                                     Dashboard</strong></span>
                             <button id="cms-logout-btn" class="btn btn-secondary"
                                 style="padding: 6px 12px; font-size: 0.85rem;">Log Out</button>
+                        </div>
+
+                        <!-- Reader Analytics and Metrics Panel -->
+                        <div id="cms-metrics-panel" class="cms-metrics-container" style="display: none; margin-bottom: 30px;">
+                            <h4 style="font-family: var(--font-serif); font-size: 1.1rem; color: var(--text-main); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; margin-top: 0;">
+                                📊 Newsroom & Audience Metrics
+                            </h4>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <span class="metric-label">Registered Readers</span>
+                                    <span id="metric-registered-readers" class="metric-value">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Reader Logins</span>
+                                    <span id="metric-total-logins" class="metric-value">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Live Active Readers</span>
+                                    <span id="metric-active-viewers" class="metric-value">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Total Article Views</span>
+                                    <span id="metric-total-views" class="metric-value">0</span>
+                                </div>
+                            </div>
+                            <div class="metric-spotlight-card" style="margin-top: 15px;">
+                                🌟 <span style="font-weight: 600;">Audience Favorite:</span> 
+                                <span id="metric-most-viewed-title" style="font-style: italic; color: var(--text-main);">Loading...</span> 
+                                (<span id="metric-most-viewed-views">0</span> views)
+                            </div>
                         </div>
 
                         <!-- Add Article Form -->

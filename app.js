@@ -1286,6 +1286,15 @@ function initAdminPanel() {
                 userLabel.textContent = role === "admin" ? "Administrator Dashboard" : "Editor Dashboard (Read-Only Mode)";
             }
 
+            // Fetch admin analytics metrics if role is admin
+            const metricsPanel = document.getElementById("cms-metrics-panel");
+            if (role === "admin") {
+                if (metricsPanel) metricsPanel.style.display = "block";
+                fetchAdminStats();
+            } else {
+                if (metricsPanel) metricsPanel.style.display = "none";
+            }
+
             // Disable or enable publish form elements depending on role
             const formElements = publishForm.querySelectorAll("input, textarea, select, button[type='submit']");
             formElements.forEach(el => {
@@ -1302,6 +1311,8 @@ function initAdminPanel() {
         } else {
             loginPanel.style.display = "block";
             publisherPanel.style.display = "none";
+            const metricsPanel = document.getElementById("cms-metrics-panel");
+            if (metricsPanel) metricsPanel.style.display = "none";
         }
     };
 
@@ -1328,27 +1339,29 @@ function initAdminPanel() {
             const username = usernameInput.value.trim();
             const password = passwordInput.value;
             
-            if (username === "omkarnathprabhujee16" && password === "123456@Omkar") {
+            fetch(`${window.location.origin}/api/admin/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password })
+            })
+            .then(res => {
+                if (!res.ok) return res.json().then(d => { throw new Error(d.error || "Login failed") });
+                return res.json();
+            })
+            .then(data => {
                 sessionStorage.setItem("admin_logged_in", "true");
-                sessionStorage.setItem("admin_role", "admin");
-                sessionStorage.setItem("admin_token", "admin-secret-session-token");
-                adminToken = "admin-secret-session-token";
-                showToast("Logged in as Administrator!", "success");
+                sessionStorage.setItem("admin_role", data.role);
+                sessionStorage.setItem("admin_token", data.token);
+                adminToken = data.token;
+                
+                showToast(`Logged in successfully as ${data.role}!`, "success");
                 checkLoginStatus();
                 usernameInput.value = "";
                 passwordInput.value = "";
-            } else if (username === "editor" && password === "editor123") {
-                sessionStorage.setItem("admin_logged_in", "true");
-                sessionStorage.setItem("admin_role", "editor");
-                sessionStorage.setItem("admin_token", "editor-secret-session-token");
-                adminToken = "editor-secret-session-token";
-                showToast("Logged in as Editor!", "success");
-                checkLoginStatus();
-                usernameInput.value = "";
-                passwordInput.value = "";
-            } else {
-                showToast("Invalid login credentials!", "alert");
-            }
+            })
+            .catch(err => {
+                showToast(err.message, "alert");
+            });
         });
     }
 
@@ -2661,4 +2674,42 @@ function startActiveViewersTracking(id) {
 
     fetchComments();
     activeCommentsInterval = setInterval(fetchComments, 5000);
+}
+
+/* ==========================================================================
+   Admin Analytics Dashboard metrics loader
+   ========================================================================== */
+function fetchAdminStats() {
+    if (!adminToken) return;
+
+    fetch(`${window.location.origin}/api/admin/stats`, {
+        method: "GET",
+        headers: {
+            "Authorization": `Bearer ${adminToken}`
+        }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Failed to load audience stats");
+        return res.json();
+    })
+    .then(data => {
+        const readersVal = document.getElementById("metric-registered-readers");
+        const loginsVal = document.getElementById("metric-total-logins");
+        const activeVal = document.getElementById("metric-active-viewers");
+        const viewsVal = document.getElementById("metric-total-views");
+        
+        const spotlightTitle = document.getElementById("metric-most-viewed-title");
+        const spotlightViews = document.getElementById("metric-most-viewed-views");
+
+        if (readersVal) readersVal.textContent = data.registeredReaders;
+        if (loginsVal) loginsVal.textContent = data.totalLogins;
+        if (activeVal) activeVal.textContent = data.activeReaders;
+        if (viewsVal) viewsVal.textContent = data.totalArticleViews;
+        
+        if (spotlightTitle) spotlightTitle.textContent = data.mostViewedArticle.title;
+        if (spotlightViews) spotlightViews.textContent = data.mostViewedArticle.views;
+    })
+    .catch(err => {
+        console.warn("Analytics stats loading error:", err);
+    });
 }

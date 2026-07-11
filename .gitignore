@@ -1,5 +1,8 @@
 node_modules/
 database.json
+users.json
+comments.json
+stats.json
 *.log
 .gemini/
 .agents/

@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 8090;
 const DB_FILE = path.join(__dirname, 'database.json');
 const USERS_FILE = path.join(__dirname, 'users.json');
 const COMMENTS_FILE = path.join(__dirname, 'comments.json');
+const STATS_FILE = path.join(__dirname, 'stats.json');
 const activeReaders = {}; // { [articleId]: { [clientId]: timestamp } }
 
 // General Rate Limiter: max 100 requests per 15 minutes
@@ -62,6 +63,22 @@ if (!fs.existsSync(USERS_FILE)) {
 }
 if (!fs.existsSync(COMMENTS_FILE)) {
     fs.writeFileSync(COMMENTS_FILE, JSON.stringify({}, null, 2), 'utf8');
+}
+if (!fs.existsSync(STATS_FILE)) {
+    fs.writeFileSync(STATS_FILE, JSON.stringify({ totalLogins: 0 }, null, 2), 'utf8');
+}
+
+function incrementLoginCount() {
+    fs.readFile(STATS_FILE, 'utf8', (err, data) => {
+        let stats = { totalLogins: 0 };
+        if (!err) {
+            try { stats = JSON.parse(data); } catch(e) {}
+        }
+        stats.totalLogins = (stats.totalLogins || 0) + 1;
+        fs.writeFile(STATS_FILE, JSON.stringify(stats, null, 2), 'utf8', (wErr) => {
+            if (wErr) console.error("Error writing stats database:", wErr);
+        });
+    });
 }
 
 // Initialize database file with premium seed articles if it doesn't exist
@@ -386,11 +403,110 @@ app.post('/api/readers/login', (req, res) => {
             return res.status(400).json({ error: 'Invalid username or password.' });
         }
 
+        incrementLoginCount();
+
         res.json({
             success: true,
             token: `reader-token-${user.username}`,
             name: user.name,
             username: user.username
+        });
+    });
+});
+
+// POST login admin / editor
+app.post('/api/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required.' });
+    }
+    const cleanUsername = String(username).trim();
+    const cleanPassword = String(password);
+
+    if (cleanUsername === 'omkarnathprabhujee16' && cleanPassword === '123456@Omkar') {
+        res.json({
+            success: true,
+            token: 'admin-secret-session-token',
+            role: 'admin'
+        });
+    } else if (cleanUsername === 'editor' && cleanPassword === 'editor123') {
+        res.json({
+            success: true,
+            token: 'editor-secret-session-token',
+            role: 'editor'
+        });
+    } else {
+        res.status(401).json({ error: 'Invalid administrator or editor credentials.' });
+    }
+});
+
+// GET admin newsroom statistics
+app.get('/api/admin/stats', authenticateAdmin, (req, res) => {
+    // Only allow admin role to see statistics (forbidden for editors)
+    if (req.userRole !== 'admin') {
+        return res.status(403).json({ error: 'Forbidden: Admin access required.' });
+    }
+
+    // Read users.json to count total registered readers
+    fs.readFile(USERS_FILE, 'utf8', (userErr, userData) => {
+        let registeredReaders = 0;
+        if (!userErr) {
+            try {
+                registeredReaders = JSON.parse(userData).length;
+            } catch(e) {}
+        }
+
+        // Read stats.json to get total logins
+        fs.readFile(STATS_FILE, 'utf8', (statsErr, statsData) => {
+            let totalLogins = 0;
+            if (!statsErr) {
+                try {
+                    totalLogins = JSON.parse(statsData).totalLogins || 0;
+                } catch(e) {}
+            }
+
+            // Calculate active readers count (unique client IDs active in memory cache in last 12s)
+            let currentActiveReadersCount = 0;
+            const now = Date.now();
+            const uniqueClients = new Set();
+            for (const articleId in activeReaders) {
+                for (const clientId in activeReaders[articleId]) {
+                    if (now - activeReaders[articleId][clientId] < 12000) {
+                        uniqueClients.add(clientId);
+                    }
+                }
+            }
+            currentActiveReadersCount = uniqueClients.size;
+
+            // Read database.json to calculate total article views and find the most viewed article
+            fs.readFile(DB_FILE, 'utf8', (dbErr, dbData) => {
+                let totalArticleViews = 0;
+                let mostViewedArticle = { title: 'N/A', views: 0 };
+                let articlesList = [];
+                
+                if (!dbErr) {
+                    try {
+                        articlesList = JSON.parse(dbData);
+                    } catch(e) {}
+                }
+
+                articlesList.forEach(art => {
+                    const views = art.views || 0;
+                    totalArticleViews += views;
+                    if (views > mostViewedArticle.views) {
+                        mostViewedArticle = { title: art.title, views: views };
+                    }
+                });
+
+                res.json({
+                    success: true,
+                    registeredReaders,
+                    totalLogins,
+                    activeReaders: currentActiveReadersCount,
+                    totalArticleViews,
+                    mostViewedArticle
+                });
+            });
         });
     });
 });
