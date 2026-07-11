@@ -7,6 +7,9 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 8090;
 const DB_FILE = path.join(__dirname, 'database.json');
+const USERS_FILE = path.join(__dirname, 'users.json');
+const COMMENTS_FILE = path.join(__dirname, 'comments.json');
+const activeReaders = {}; // { [articleId]: { [clientId]: timestamp } }
 
 // General Rate Limiter: max 100 requests per 15 minutes
 const generalLimiter = rateLimit({
@@ -51,6 +54,14 @@ function authenticateAdmin(req, res, next) {
     } else {
         return res.status(403).json({ error: 'Forbidden: Invalid token credentials' });
     }
+}
+
+// Initialize users and comments database files
+if (!fs.existsSync(USERS_FILE)) {
+    fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2), 'utf8');
+}
+if (!fs.existsSync(COMMENTS_FILE)) {
+    fs.writeFileSync(COMMENTS_FILE, JSON.stringify({}, null, 2), 'utf8');
 }
 
 // Initialize database file with premium seed articles if it doesn't exist
@@ -316,6 +327,192 @@ app.delete('/api/news/:id', adminActionLimiter, authenticateAdmin, (req, res) =>
             res.json({ success: true });
         });
     });
+});
+
+// POST signup reader
+app.post('/api/readers/signup', (req, res) => {
+    const { username, password, name } = req.body;
+    if (!username || !password || !name) {
+        return res.status(400).json({ error: 'Username, password, and name are required.' });
+    }
+    const cleanUsername = String(username).trim();
+    const cleanPassword = String(password);
+    const cleanName = String(name).trim();
+
+    fs.readFile(USERS_FILE, 'utf8', (err, data) => {
+        if (err) return res.status(500).json({ error: 'Failed to read users database' });
+        let users = [];
+        try {
+            users = JSON.parse(data);
+        } catch (e) {
+            users = [];
+        }
+        
+        const exists = users.find(u => u.username.toLowerCase() === cleanUsername.toLowerCase());
+        if (exists) {
+            return res.status(400).json({ error: 'Username already taken.' });
+        }
+
+        const newUser = { username: cleanUsername, password: cleanPassword, name: cleanName };
+        users.push(newUser);
+
+        fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf8', (writeErr) => {
+            if (writeErr) return res.status(500).json({ error: 'Failed to save user' });
+            res.json({ success: true, user: { username: cleanUsername, name: cleanName } });
+        });
+    });
+});
+
+// POST login reader
+app.post('/api/readers/login', (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required.' });
+    }
+    const cleanUsername = String(username).trim();
+    const cleanPassword = String(password);
+
+    fs.readFile(USERS_FILE, 'utf8', (err, data) => {
+        if (err) return res.status(500).json({ error: 'Failed to read users database' });
+        let users = [];
+        try {
+            users = JSON.parse(data);
+        } catch (e) {
+            users = [];
+        }
+        
+        const user = users.find(u => u.username.toLowerCase() === cleanUsername.toLowerCase() && u.password === cleanPassword);
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid username or password.' });
+        }
+
+        res.json({
+            success: true,
+            token: `reader-token-${user.username}`,
+            name: user.name,
+            username: user.username
+        });
+    });
+});
+
+// GET comments for an article
+app.get('/api/comments/:articleId', (req, res) => {
+    const articleId = req.params.articleId;
+    fs.readFile(COMMENTS_FILE, 'utf8', (err, data) => {
+        if (err) return res.status(500).json({ error: 'Failed to read comments database' });
+        let commentsMap = {};
+        try {
+            commentsMap = JSON.parse(data);
+        } catch (e) {
+            commentsMap = {};
+        }
+        res.json(commentsMap[articleId] || []);
+    });
+});
+
+// POST a comment or reply to an article
+app.post('/api/comments/:articleId', (req, res) => {
+    const articleId = req.params.articleId;
+    const { text, author, parentCommentId } = req.body;
+
+    if (!text || !author) {
+        return res.status(400).json({ error: 'Comment author and text are required.' });
+    }
+
+    fs.readFile(COMMENTS_FILE, 'utf8', (err, data) => {
+        if (err) return res.status(500).json({ error: 'Failed to read comments database' });
+        let commentsMap = {};
+        try {
+            commentsMap = JSON.parse(data);
+        } catch (e) {
+            commentsMap = {};
+        }
+
+        if (!commentsMap[articleId]) {
+            commentsMap[articleId] = [];
+        }
+
+        if (parentCommentId) {
+            const parent = commentsMap[articleId].find(c => c.id === parentCommentId);
+            if (!parent) {
+                return res.status(404).json({ error: 'Parent comment not found' });
+            }
+            if (!parent.replies) parent.replies = [];
+            parent.replies.push({
+                id: 'reply-' + Date.now(),
+                author: String(author).trim(),
+                text: String(text).trim(),
+                timestamp: 'Just now'
+            });
+        } else {
+            commentsMap[articleId].unshift({
+                id: 'comment-' + Date.now(),
+                author: String(author).trim(),
+                text: String(text).trim(),
+                timestamp: 'Just now',
+                replies: []
+            });
+        }
+
+        fs.writeFile(COMMENTS_FILE, JSON.stringify(commentsMap, null, 2), 'utf8', (writeErr) => {
+            if (writeErr) return res.status(500).json({ error: 'Failed to save comment' });
+            res.json({ success: true, comments: commentsMap[articleId] });
+        });
+    });
+});
+
+// POST increment view count
+app.post('/api/news/:id/view', (req, res) => {
+    const articleId = req.params.id;
+
+    fs.readFile(DB_FILE, 'utf8', (err, data) => {
+        if (err) return res.status(500).json({ error: 'Failed to read news database' });
+        let articles = [];
+        try {
+            articles = JSON.parse(data);
+        } catch (e) {
+            return res.status(500).json({ error: 'Failed to parse news database' });
+        }
+
+        const index = articles.findIndex(a => a.id === articleId);
+        if (index === -1) {
+            return res.status(404).json({ error: 'Article not found' });
+        }
+
+        if (articles[index].views === undefined) {
+            articles[index].views = 0;
+        }
+        articles[index].views += 1;
+
+        fs.writeFile(DB_FILE, JSON.stringify(articles, null, 2), 'utf8', (writeErr) => {
+            if (writeErr) return res.status(500).json({ error: 'Failed to save database' });
+            res.json({ success: true, views: articles[index].views });
+        });
+    });
+});
+
+// POST reader heartbeat (active readers concurrent tracking)
+app.post('/api/news/:id/heartbeat', (req, res) => {
+    const articleId = req.params.id;
+    const { clientId } = req.body;
+
+    if (!activeReaders[articleId]) {
+        activeReaders[articleId] = {};
+    }
+
+    if (clientId) {
+        activeReaders[articleId][clientId] = Date.now();
+    }
+
+    const now = Date.now();
+    for (const cid in activeReaders[articleId]) {
+        if (now - activeReaders[articleId][cid] > 12000) {
+            delete activeReaders[articleId][cid];
+        }
+    }
+
+    const count = Object.keys(activeReaders[articleId]).length;
+    res.json({ activeViewers: Math.max(1, count) });
 });
 
 // Fallback to index.html for main SPA routes

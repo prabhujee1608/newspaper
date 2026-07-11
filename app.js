@@ -62,7 +62,9 @@ const DEFAULT_SEED_ARTICLES = [
 const DEFAULT_WORDPRESS_URL = "https://techcrunch.com";
 let WORDPRESS_SITE_URL = localStorage.getItem("wordpress_site_url") || DEFAULT_WORDPRESS_URL;
 
-const BACKEND_API_URL = "https://newspaper-production-2897.up.railway.app/api/news";
+const BACKEND_API_URL = window.location.origin.startsWith("http")
+    ? `${window.location.origin}/api/news`
+    : "http://localhost:8090/api/news";
 
 async function fetchLocalPublisherNews() {
     try {
@@ -118,6 +120,28 @@ let displayedArticlesCount = 6;
 let adminToken = sessionStorage.getItem("admin_token") || "";
 let fontSizeClass = "font-size-medium";
 let editingArticleId = null;
+let searchQuery = "";
+
+// Reader Authenticated Session State
+let readerToken = localStorage.getItem("reader_token") || "";
+let readerName = localStorage.getItem("reader_name") || "";
+let readerUsername = localStorage.getItem("reader_username") || "";
+
+// Live Views & Comments Polling State
+let activeViewersInterval = null;
+let activeCommentsInterval = null;
+let activeCommentsList = [];
+let clientId = sessionStorage.getItem("reader_client_id") || (() => {
+    const cid = "client-" + Math.random().toString(36).substring(2) + Date.now().toString(36);
+    sessionStorage.setItem("reader_client_id", cid);
+    return cid;
+})();
+
+// Feed Pagination State
+let paginationMode = "infinite"; // infinite or page
+let currentPage = 1;
+const pageSize = 6;
+let scrollObserver = null;
 
 // Text to Speech State
 let activeSpeechUtterance = null;
@@ -149,6 +173,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 7. Setup Comments submission
     initCommentsForm();
+
+    // 7a. Setup Reader Authentication
+    initReaderAuth();
+
+    // 7b. Setup Feed Scroll/Pagination controls
+    initPaginationControls();
 
     // 8. Load voices for TTS
     initTTSVoices();
@@ -356,6 +386,14 @@ function switchView(viewName) {
     // 1. Cancel speech synthesis immediately if navigating away from reader
     if (currentView === "article" && viewName !== "article") {
         cancelSpeech();
+        if (activeViewersInterval) {
+            clearInterval(activeViewersInterval);
+            activeViewersInterval = null;
+        }
+        if (activeCommentsInterval) {
+            clearInterval(activeCommentsInterval);
+            activeCommentsInterval = null;
+        }
     }
 
     // 2. Set active view state
@@ -405,7 +443,7 @@ function renderArticlesList() {
 
     // Apply category filter
     if (currentCategory !== "all") {
-        filtered = filtered.filter(art => art.category === currentCategory);
+        filtered = filtered.filter(art => art.category.toLowerCase() === currentCategory.toLowerCase());
     }
 
     // Apply search query filter
@@ -432,46 +470,58 @@ function renderArticlesList() {
         return;
     }
 
-    // The first article in list is rendered in the featured HERO view
-    const heroArticle = filtered[0];
+    // Render Grid Articles
+    let startIdx = 1;
+    let endIdx = displayedArticlesCount;
     
-    // Pagination / Slicing for grid articles
+    if (paginationMode === "page") {
+        startIdx = 1 + (currentPage - 1) * pageSize;
+        endIdx = startIdx + pageSize;
+    }
+    
     const totalCount = filtered.length;
-    const gridArticles = filtered.slice(1, displayedArticlesCount);
+    const heroArticle = filtered[0];
+    const gridArticles = filtered.slice(startIdx, endIdx);
 
-    // Render HERO
-    const readTimeHero = Math.ceil(heroArticle.content.replace(/<[^>]*>/g, '').split(/\s+/).length / 200);
-    const isHeroBookmarked = bookmarks.includes(heroArticle.id);
-
-    heroContainer.innerHTML = `
-        <div class="hero-card" data-id="${heroArticle.id}">
-            <div class="hero-img-wrap">
-                <span class="badge badge-${heroArticle.category} hero-meta-badge">${heroArticle.category}</span>
-                <img src="${heroArticle.image}" alt="${heroArticle.title}">
-            </div>
-            <div class="hero-details">
-                <div class="hero-date-read">
-                    <span>${heroArticle.date}</span>
-                    <span>•</span>
-                    <span>${readTimeHero} min read</span>
+    // Render HERO (only if we are on Page 1 or in Infinite Scroll Mode)
+    if (paginationMode === "infinite" || currentPage === 1) {
+        const readTimeHero = Math.ceil(heroArticle.content.replace(/<[^>]*>/g, '').split(/\s+/).length / 200);
+        const isHeroBookmarked = bookmarks.includes(heroArticle.id);
+        heroContainer.style.display = "block";
+        heroContainer.innerHTML = `
+            <div class="hero-card" data-id="${heroArticle.id}">
+                <div class="hero-img-wrap">
+                    <span class="badge badge-${heroArticle.category} hero-meta-badge">${heroArticle.category}</span>
+                    <img src="${heroArticle.image}" alt="${heroArticle.title}">
                 </div>
-                <h2 class="hero-headline">
-                    <a href="#" class="view-article-link" data-id="${heroArticle.id}">${highlightText(heroArticle.title)}</a>
-                </h2>
-                <p class="hero-excerpt">${highlightText(heroArticle.abstract)}</p>
-                <div class="hero-author-row">
-                    <div class="author-avatar">${heroArticle.author.charAt(0)}</div>
-                    <div class="author-details">
-                        <span class="author-name">${highlightText(heroArticle.author)}</span>
-                        <span class="author-title">Senior Correspondent</span>
+                <div class="hero-details">
+                    <div class="hero-date-read">
+                        <span>${heroArticle.date}</span>
+                        <span>•</span>
+                        <span>${readTimeHero} min read</span>
+                        <span>•</span>
+                        <span>👁️ ${heroArticle.views || 0} views</span>
                     </div>
-                    <button class="btn-icon card-bookmark-btn ${isHeroBookmarked ? 'active' : ''}" data-id="${heroArticle.id}" style="margin-left: auto; border:none; background:none;" title="Bookmark">
-                        <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H7a2 2 0 0 0-2 2v16l7-3l7 3V5a2 2 0 0 0-2-2m0 15l-5-2.18L7 18V5h10Z"/></svg>
-                    </button>
+                    <h2 class="hero-headline">
+                        <a href="#" class="view-article-link" data-id="${heroArticle.id}">${highlightText(heroArticle.title)}</a>
+                    </h2>
+                    <p class="hero-excerpt">${highlightText(heroArticle.abstract)}</p>
+                    <div class="hero-author-row">
+                        <div class="author-avatar">${heroArticle.author.charAt(0)}</div>
+                        <div class="author-details">
+                            <span class="author-name">${highlightText(heroArticle.author)}</span>
+                            <span class="author-title">Senior Correspondent</span>
+                        </div>
+                        <button class="btn-icon card-bookmark-btn ${isHeroBookmarked ? 'active' : ''}" data-id="${heroArticle.id}" style="margin-left: auto; border:none; background:none;" title="Bookmark">
+                            <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H7a2 2 0 0 0-2 2v16l7-3l7 3V5a2 2 0 0 0-2-2m0 15l-5-2.18L7 18V5h10Z"/></svg>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
+    } else {
+        heroContainer.style.display = "none";
+    }
 
     // Render Grid Articles
     let gridHTML = "";
@@ -490,6 +540,8 @@ function renderArticlesList() {
                         <span>${art.date}</span>
                         <span>•</span>
                         <span>${readTime} min read</span>
+                        <span>•</span>
+                        <span>👁️ ${art.views || 0} views</span>
                     </div>
                     <h3 class="card-headline">
                         <a href="#" class="view-article-link" data-id="${art.id}">${highlightText(art.title)}</a>
@@ -511,21 +563,92 @@ function renderArticlesList() {
             </div>
         `;
     });
-
     gridContainer.innerHTML = gridHTML;
 
-    // Render Load More Pagination Button
+    // Bind navigation triggers
+    document.querySelectorAll(".view-article-link").forEach(link => {
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            activeArticleId = link.getAttribute("data-id");
+            switchView("article");
+        });
+    });
+
+    // Bind card bookmarks
+    document.querySelectorAll(".card-bookmark-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const id = btn.getAttribute("data-id");
+            toggleBookmarkState(id);
+            btn.classList.toggle("active");
+        });
+    });
+
+    // Render Load More / Scroll Observer / Pagination Controls
     if (loadMoreContainer) {
-        if (totalCount > displayedArticlesCount) {
-            loadMoreContainer.innerHTML = `
-                <button id="load-more-btn" class="btn btn-primary" style="padding: 10px 25px; font-weight: 600; cursor: pointer; border-radius: 4px;">Load More Stories</button>
-            `;
-            document.getElementById("load-more-btn").addEventListener("click", () => {
-                displayedArticlesCount += 6;
-                renderArticlesList();
-            });
+        // Disconnect old scroll observer
+        if (scrollObserver) {
+            scrollObserver.disconnect();
+            scrollObserver = null;
+        }
+
+        if (paginationMode === "infinite") {
+            if (totalCount > displayedArticlesCount) {
+                loadMoreContainer.innerHTML = `
+                    <div id="infinite-scroll-sentinel" style="height: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; padding: 25px 0;">
+                        <span>Loading more articles...</span>
+                    </div>
+                `;
+                
+                const sentinel = document.getElementById("infinite-scroll-sentinel");
+                scrollObserver = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) {
+                        displayedArticlesCount += pageSize;
+                        renderArticlesList();
+                    }
+                }, { threshold: 0.1 });
+                scrollObserver.observe(sentinel);
+            } else {
+                loadMoreContainer.innerHTML = `
+                    <p style="text-align: center; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; padding: 20px 0;">No more articles to load.</p>
+                `;
+            }
         } else {
-            loadMoreContainer.innerHTML = "";
+            // Page Pagination
+            const totalGridPages = Math.ceil((totalCount - 1) / pageSize);
+            if (totalGridPages > 1) {
+                let pagesHTML = `<div class="pagination-container">`;
+                pagesHTML += `
+                    <button class="pagination-btn" id="pagination-prev" ${currentPage === 1 ? "disabled" : ""}>&laquo; Prev</button>
+                `;
+                for (let i = 1; i <= totalGridPages; i++) {
+                    pagesHTML += `
+                        <button class="pagination-btn ${currentPage === i ? "active" : ""}" data-page="${i}">${i}</button>
+                    `;
+                }
+                pagesHTML += `
+                    <button class="pagination-btn" id="pagination-next" ${currentPage === totalGridPages ? "disabled" : ""}>Next &raquo;</button>
+                `;
+                pagesHTML += `</div>`;
+                loadMoreContainer.innerHTML = pagesHTML;
+
+                loadMoreContainer.querySelectorAll(".pagination-btn").forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        const pageAttr = btn.getAttribute("data-page");
+                        if (pageAttr) {
+                            currentPage = parseInt(pageAttr);
+                        } else if (btn.id === "pagination-prev") {
+                            currentPage = Math.max(1, currentPage - 1);
+                        } else if (btn.id === "pagination-next") {
+                            currentPage = Math.min(totalGridPages, currentPage + 1);
+                        }
+                        renderArticlesList();
+                        document.getElementById("view-feed").scrollIntoView({ behavior: "smooth" });
+                    });
+                });
+            } else {
+                loadMoreContainer.innerHTML = "";
+            }
         }
     }
 
@@ -701,6 +824,10 @@ function renderArticleDetail() {
         return;
     }
 
+    // Start views tracking and active heartbeat
+    incrementArticleViews(article.id);
+    startActiveViewersTracking(article.id);
+
     // Dynamic SEO update for details page
     document.title = `${article.title} | Jan Jagriti Network`;
     const descMeta = document.querySelector('meta[name="description"]');
@@ -731,8 +858,17 @@ function renderArticleDetail() {
                 <div class="author-avatar">${article.author.charAt(0)}</div>
                 <div>
                     <strong>By ${article.author}</strong>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
-                        Published ${article.date} &nbsp;•&nbsp; ${readTime} min read
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span>Published ${article.date}</span>
+                        <span>•</span>
+                        <span>${readTime} min read</span>
+                        <span>•</span>
+                        <span style="display: inline-flex; align-items: center; gap: 3px;"><svg style="width:14px; height:14px; margin-top:-1px;" viewBox="0 0 24 24"><path fill="currentColor" d="M12 9a3 3 0 1 1-3 3a3 3 0 0 1 3-3m0-4.5c5 0 9.27 3.11 11 7.5c-1.73 4.39-6 7.5-11 7.5S2.73 16.39 1 12c1.73-4.39 6-7.5 11-7.5M12 17a5 5 0 1 0-5-5a5 5 0 0 0 5 5Z"/></svg> <span id="article-total-views">${article.views || 0}</span> views</span>
+                        <span>•</span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px; color: var(--accent); font-weight: bold; background: rgba(185, 28, 28, 0.08); padding: 1px 6px; border-radius: 4px;">
+                            <span class="live-pulse-dot" style="width: 7px; height: 7px; background: var(--accent); border-radius: 50%; display: inline-block;"></span>
+                            <span id="article-live-viewers">1</span> reading now
+                        </span>
                     </div>
                 </div>
             </div>
@@ -923,36 +1059,77 @@ function initCommentsForm() {
     form.addEventListener("submit", (e) => {
         e.preventDefault();
         
-        const authorInput = document.getElementById("comment-author");
-        const textInput = document.getElementById("comment-text");
-        
-        const newComment = {
-            id: "comment-" + Date.now(),
-            author: authorInput.value.trim(),
-            text: textInput.value.trim(),
-            timestamp: "Just now",
-            replies: []
-        };
-
-        if (!comments[activeArticleId]) {
-            comments[activeArticleId] = [];
+        if (!readerToken) {
+            showToast("Please sign in to comment", "alert");
+            return;
         }
 
-        comments[activeArticleId].unshift(newComment);
-        localStorage.setItem("the_chronicle_comments", JSON.stringify(comments));
+        const textInput = document.getElementById("comment-text");
+        const commentText = textInput.value.trim();
+        if (!commentText) return;
 
-        textInput.value = "";
-        authorInput.value = "";
-        
-        showToast("Comment posted successfully");
-        renderComments();
+        fetch(`${window.location.origin}/api/comments/${activeArticleId}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                author: readerName,
+                text: commentText
+            })
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Failed to post comment");
+            return res.json();
+        })
+        .then(data => {
+            textInput.value = "";
+            showToast("Comment posted successfully", "success");
+            fetchComments();
+        })
+        .catch(err => {
+            showToast(err.message, "alert");
+        });
     });
 }
 
 function renderComments() {
-    const activeComments = comments[activeArticleId] || [];
+    const activeComments = activeCommentsList;
     const countContainer = document.getElementById("comments-count");
     const listContainer = document.getElementById("comments-list");
+
+    const form = document.getElementById("comment-submit-form");
+    let prompt = document.getElementById("comment-login-prompt");
+
+    if (!readerToken) {
+        form.style.display = "none";
+        if (!prompt) {
+            prompt = document.createElement("div");
+            prompt.id = "comment-login-prompt";
+            prompt.className = "comment-login-prompt";
+            prompt.innerHTML = `
+                <p>You must be signed in to post comments or replies.</p>
+                <button class="btn btn-primary" id="comment-signin-trigger" style="padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: 600;">Sign In / Sign Up</button>
+            `;
+            form.parentNode.insertBefore(prompt, form);
+            document.getElementById("comment-signin-trigger").addEventListener("click", () => {
+                document.getElementById("nav-reader-login").click();
+            });
+        } else {
+            prompt.style.display = "block";
+        }
+    } else {
+        form.style.display = "block";
+        if (prompt) prompt.style.display = "none";
+        
+        const authorInput = document.getElementById("comment-author");
+        if (authorInput) {
+            authorInput.value = readerName;
+            authorInput.readOnly = true;
+            authorInput.style.opacity = "0.7";
+            authorInput.style.cursor = "not-allowed";
+        }
+    }
 
     // Calculate total count (comments + inner replies)
     let totalCount = 0;
@@ -1020,6 +1197,12 @@ function renderCommentReplies(replies) {
 }
 
 function toggleReplyForm(commentId) {
+    if (!readerToken) {
+        showToast("Please sign in to reply.", "alert");
+        document.getElementById("nav-reader-login").click();
+        return;
+    }
+
     const container = document.getElementById(`reply-container-${commentId}`);
     if (container.style.display === "block") {
         container.style.display = "none";
@@ -1030,48 +1213,50 @@ function toggleReplyForm(commentId) {
     container.style.display = "block";
     container.innerHTML = `
         <div class="comment-form" style="padding: 12px; margin-bottom: 0; background-color: var(--bg-card);">
-            <div class="comment-form-row">
-                <input type="text" id="reply-author-${commentId}" required placeholder="Your Name" style="padding:6px 10px; font-size:0.8rem;">
+            <div class="comment-form-row" style="display: none;">
+                <input type="text" id="reply-author-${commentId}" value="${readerName}" required readonly>
             </div>
             <div class="comment-form-row">
-                <textarea id="reply-text-${commentId}" required rows="2" placeholder="Write reply..." style="padding:6px 10px; font-size:0.8rem;"></textarea>
+                <textarea id="reply-text-${commentId}" required rows="2" placeholder="Write reply as ${readerName}..." style="padding:6px 10px; font-size:0.8rem;"></textarea>
             </div>
-            <button class="btn btn-primary submit-reply-btn" data-id="${commentId}" style="padding:4px 10px; font-size:0.75rem;">Post Reply</button>
+            <button class="btn btn-primary submit-reply-btn" data-id="${commentId}" style="padding:4px 10px; font-size:0.75rem; cursor: pointer;">Post Reply</button>
         </div>
     `;
 
-    // Attach submission event
     container.querySelector(".submit-reply-btn").addEventListener("click", () => {
         submitReply(commentId);
     });
 }
 
 function submitReply(commentId) {
-    const authorInput = document.getElementById(`reply-author-${commentId}`);
     const textInput = document.getElementById(`reply-text-${commentId}`);
-    
-    const author = authorInput.value.trim();
+    if (!textInput) return;
     const text = textInput.value.trim();
 
-    if (!author || !text) return;
+    if (!text) return;
 
-    // Find parent comment
-    const activeComments = comments[activeArticleId] || [];
-    const parentComment = activeComments.find(c => c.id === commentId);
-
-    if (parentComment) {
-        if (!parentComment.replies) parentComment.replies = [];
-        parentComment.replies.push({
-            id: "reply-" + Date.now(),
-            author: author,
+    fetch(`${window.location.origin}/api/comments/${activeArticleId}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            author: readerName,
             text: text,
-            timestamp: "Just now"
-        });
-
-        localStorage.setItem("the_chronicle_comments", JSON.stringify(comments));
-        showToast("Reply posted successfully");
-        renderComments();
-    }
+            parentCommentId: commentId
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Failed to post reply");
+        return res.json();
+    })
+    .then(data => {
+        showToast("Reply posted successfully", "success");
+        fetchComments();
+    })
+    .catch(err => {
+        showToast(err.message, "alert");
+    });
 }
 
 /* ==========================================================================
@@ -1143,7 +1328,7 @@ function initAdminPanel() {
             const username = usernameInput.value.trim();
             const password = passwordInput.value;
             
-            if (username === "admin" && password === "admin123") {
+            if (username === "omkarnathprabhujee16" && password === "123456@Omkar") {
                 sessionStorage.setItem("admin_logged_in", "true");
                 sessionStorage.setItem("admin_role", "admin");
                 sessionStorage.setItem("admin_token", "admin-secret-session-token");
@@ -1791,14 +1976,17 @@ function renderLatestHeadlinesList() {
    ========================================================================== */
 function renderTrendingList() {
     const list = document.getElementById("trending-headlines-list");
-    const trendingArticles = articles.filter(art => art.trending).slice(0, 5);
+    // Sort by views count descending, fallback to 0
+    const trendingArticles = [...articles]
+        .sort((a, b) => (b.views || 0) - (a.views || 0))
+        .slice(0, 5);
 
     let html = "";
     trendingArticles.forEach(art => {
         html += `
             <li class="trending-item">
                 <a href="#" class="trending-link" data-id="${art.id}">${art.title}</a>
-                <div class="trending-item-meta">${art.category} &nbsp;•&nbsp; By ${art.author}</div>
+                <div class="trending-item-meta">${art.category} &nbsp;•&nbsp; By ${art.author} &nbsp;•&nbsp; 👁️ ${art.views || 0} views</div>
             </li>
         `;
     });
@@ -2210,4 +2398,267 @@ async function fetchWordPressPage(slug, elementId, defaultHTML) {
         console.warn(`WordPress Page for '${slug}' not loaded, fallback to default.`);
         container.innerHTML = defaultHTML;
     }
+}
+
+/* ==========================================================================
+   Reader Authentication & Session Functions
+   ========================================================================== */
+function initReaderAuth() {
+    const loginBtn = document.getElementById("nav-reader-login");
+    const logoutBtn = document.getElementById("reader-logout-btn");
+    const welcomeLabel = document.getElementById("reader-welcome-label");
+    const modal = document.getElementById("reader-auth-modal");
+    const closeModal = document.getElementById("close-reader-modal");
+    
+    const loginPane = document.getElementById("reader-login-pane");
+    const signupPane = document.getElementById("reader-signup-pane");
+    const goToSignup = document.getElementById("go-to-signup");
+    const goToLogin = document.getElementById("go-to-login");
+    
+    const loginForm = document.getElementById("reader-login-form");
+    const signupForm = document.getElementById("reader-signup-form");
+
+    const updateReaderHeaderUI = () => {
+        if (readerToken) {
+            if (loginBtn) loginBtn.style.display = "none";
+            if (welcomeLabel) {
+                welcomeLabel.textContent = `Hi, ${readerName}!`;
+                welcomeLabel.style.display = "inline";
+            }
+            if (logoutBtn) logoutBtn.style.display = "inline";
+        } else {
+            if (loginBtn) loginBtn.style.display = "inline-flex";
+            if (welcomeLabel) welcomeLabel.style.display = "none";
+            if (logoutBtn) logoutBtn.style.display = "none";
+        }
+    };
+    
+    updateReaderHeaderUI();
+
+    if (loginBtn) {
+        loginBtn.addEventListener("click", () => {
+            if (modal) {
+                modal.style.display = "flex";
+                if (loginPane) loginPane.style.display = "block";
+                if (signupPane) signupPane.style.display = "none";
+            }
+        });
+    }
+
+    if (closeModal && modal) {
+        closeModal.addEventListener("click", () => {
+            modal.style.display = "none";
+        });
+    }
+
+    if (goToSignup && loginPane && signupPane) {
+        goToSignup.addEventListener("click", (e) => {
+            e.preventDefault();
+            loginPane.style.display = "none";
+            signupPane.style.display = "block";
+        });
+    }
+
+    if (goToLogin && loginPane && signupPane) {
+        goToLogin.addEventListener("click", (e) => {
+            e.preventDefault();
+            loginPane.style.display = "block";
+            signupPane.style.display = "none";
+        });
+    }
+
+    // Login Form Submit
+    if (loginForm) {
+        loginForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const usernameInput = document.getElementById("reader-login-user");
+            const passwordInput = document.getElementById("reader-login-pass");
+            
+            fetch(`${window.location.origin}/api/readers/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: usernameInput.value.trim(),
+                    password: passwordInput.value
+                })
+            })
+            .then(res => {
+                if (!res.ok) return res.json().then(d => { throw new Error(d.error || "Login failed") });
+                return res.json();
+            })
+            .then(data => {
+                readerToken = data.token;
+                readerName = data.name;
+                readerUsername = data.username;
+                
+                localStorage.setItem("reader_token", readerToken);
+                localStorage.setItem("reader_name", readerName);
+                localStorage.setItem("reader_username", readerUsername);
+                
+                showToast("Welcome back!", "success");
+                updateReaderHeaderUI();
+                if (modal) modal.style.display = "none";
+                usernameInput.value = "";
+                passwordInput.value = "";
+                
+                if (currentView === "article") {
+                    renderComments();
+                }
+            })
+            .catch(err => {
+                showToast(err.message, "alert");
+            });
+        });
+    }
+
+    // Signup Form Submit
+    if (signupForm) {
+        signupForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const nameInput = document.getElementById("reader-signup-name");
+            const usernameInput = document.getElementById("reader-signup-user");
+            const passwordInput = document.getElementById("reader-signup-pass");
+            
+            fetch(`${window.location.origin}/api/readers/signup`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: nameInput.value.trim(),
+                    username: usernameInput.value.trim(),
+                    password: passwordInput.value
+                })
+            })
+            .then(res => {
+                if (!res.ok) return res.json().then(d => { throw new Error(d.error || "Signup failed") });
+                return res.json();
+            })
+            .then(data => {
+                showToast("Account created! Please sign in.", "success");
+                nameInput.value = "";
+                usernameInput.value = "";
+                passwordInput.value = "";
+                
+                if (loginPane) loginPane.style.display = "block";
+                if (signupPane) signupPane.style.display = "none";
+            })
+            .catch(err => {
+                showToast(err.message, "alert");
+            });
+        });
+    }
+
+    // Logout
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            readerToken = "";
+            readerName = "";
+            readerUsername = "";
+            
+            localStorage.removeItem("reader_token");
+            localStorage.removeItem("reader_name");
+            localStorage.removeItem("reader_username");
+            
+            showToast("Signed out successfully.", "success");
+            updateReaderHeaderUI();
+            
+            if (currentView === "article") {
+                renderComments();
+            }
+        });
+    }
+}
+
+/* ==========================================================================
+   Feed Reading Mode Toggles
+   ========================================================================== */
+function initPaginationControls() {
+    const toggleInfinite = document.getElementById("toggle-infinite-scroll");
+    const togglePage = document.getElementById("toggle-page-pagination");
+
+    if (toggleInfinite && togglePage) {
+        toggleInfinite.addEventListener("click", () => {
+            paginationMode = "infinite";
+            toggleInfinite.classList.add("active");
+            togglePage.classList.remove("active");
+            currentPage = 1;
+            displayedArticlesCount = 6;
+            renderArticlesList();
+        });
+
+        togglePage.addEventListener("click", () => {
+            paginationMode = "page";
+            togglePage.classList.add("active");
+            toggleInfinite.classList.remove("active");
+            currentPage = 1;
+            renderArticlesList();
+        });
+    }
+}
+
+/* ==========================================================================
+   Comments live fetching loader
+   ========================================================================== */
+function fetchComments() {
+    if (!activeArticleId) return;
+    fetch(`${window.location.origin}/api/comments/${activeArticleId}`)
+    .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch comments");
+        return res.json();
+    })
+    .then(data => {
+        activeCommentsList = data;
+        renderComments();
+    })
+    .catch(err => {
+        console.warn("Failed to fetch comments:", err);
+    });
+}
+
+/* ==========================================================================
+   Article Views and Heartbeats trackers
+   ========================================================================== */
+function incrementArticleViews(id) {
+    fetch(`${window.location.origin}/api/news/${id}/view`, { method: "POST" })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const viewsEl = document.getElementById("article-total-views");
+            if (viewsEl) viewsEl.textContent = data.views;
+            
+            // Sync local cache
+            const index = articles.findIndex(a => a.id === id);
+            if (index !== -1) {
+                articles[index].views = data.views;
+                localStorage.setItem("the_chronicle_articles", JSON.stringify(articles));
+                // Update views inside home grid dynamically if visible
+                renderTrendingList();
+            }
+        }
+    })
+    .catch(err => console.warn("Failed to increment views:", err));
+}
+
+function startActiveViewersTracking(id) {
+    if (activeViewersInterval) clearInterval(activeViewersInterval);
+    if (activeCommentsInterval) clearInterval(activeCommentsInterval);
+
+    const sendHeartbeat = () => {
+        fetch(`${window.location.origin}/api/news/${id}/heartbeat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ clientId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const activeEl = document.getElementById("article-live-viewers");
+            if (activeEl) activeEl.textContent = data.activeViewers;
+        })
+        .catch(err => console.warn("Heartbeat failed:", err));
+    };
+
+    sendHeartbeat();
+    activeViewersInterval = setInterval(sendHeartbeat, 5000);
+
+    fetchComments();
+    activeCommentsInterval = setInterval(fetchComments, 5000);
 }
