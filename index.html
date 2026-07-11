@@ -37,9 +37,9 @@
                     <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H7a2 2 0 0 0-2 2v16l7-3l7 3V5a2 2 0 0 0-2-2m0 15l-5-2.18L7 18V5h10Z"/></svg>
                     <span>Bookmarks</span>
                 </button>
-                <button id="nav-write" class="btn btn-primary">
-                    <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14.06 9l.94.94L5.92 19H5v-.92L14.06 9m3.6-6c-.25 0-.51.1-.7.29l-1.83 1.83l3.75 3.75l1.83-1.83c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3.02 17.25V21h3.75L17.81 9.94l-3.75-3.75Z"/></svg>
-                    <span>Publish</span>
+                <button id="nav-write" class="btn btn-secondary">
+                    <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94c0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94c0 .31.04.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6s3.6 1.62 3.6 3.6s-1.62 3.6-3.6 3.6z"/></svg>
+                    <span>CMS Settings</span>
                 </button>
 
             </div>
@@ -152,32 +152,56 @@
 
 
 
-                <!-- ADMIN CMS VIEW -->
+                <!-- CMS SETTINGS VIEW -->
                 <div id="view-admin" class="view-panel">
                     <div class="panel-header">
                         <button class="btn-back btn-icon" aria-label="Back to home">
                             <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8l8 8l1.41-1.41L7.83 13H20v-2Z"/></svg>
                         </button>
-                        <h2>Publishing Dashboard</h2>
+                        <h2>CMS Newsroom Dashboard</h2>
                     </div>
-                    <div class="cms-card">
-                        <p class="cms-intro">Compose and publish news articles instantly. Published articles will go live immediately on the homepage feed and categories.</p>
-                        <form id="cms-publish-form" class="cms-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="cms-title">Article Title</label>
-                                    <input type="text" id="cms-title" required placeholder="e.g. Breakout Research Shows Renewable Grid Breakthrough">
-                                </div>
+                    
+                    <!-- Login Panel -->
+                    <div id="cms-login-panel" class="cms-card">
+                        <p class="cms-intro">Log in with your admin credentials to publish and manage news stories on Jan Jagriti Network.</p>
+                        <form id="cms-login-form" class="cms-form">
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label for="cms-username">Admin Username</label>
+                                <input type="text" id="cms-username" required placeholder="Enter username (e.g. admin)" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); color: var(--text-main);">
                             </div>
-                            <div class="form-row flex-row">
-                                <div class="form-group flex-1">
-                                    <label for="cms-author">Author Name</label>
-                                    <input type="text" id="cms-author" required placeholder="e.g. Helena Vance">
-                                </div>
-                                <div class="form-group flex-1">
-                                    <label for="cms-category">Category</label>
-                                    <select id="cms-category" required>
-                                        <option value="" disabled selected>Select category</option>
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="cms-password">Password</label>
+                                <input type="password" id="cms-password" required placeholder="Enter password (e.g. admin123)" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); color: var(--text-main);">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary btn-large" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <svg class="icon" viewBox="0 0 24 24" style="width: 18px; height: 18px;"><path fill="currentColor" d="M12 17a2 2 0 0 0 2-2a2 2 0 0 0-2-2a2 2 0 0 0-2 2a2 2 0 0 0 2 2m6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2m-6-5c1.66 0 3 1.34 3 3v2H9V6c0-1.66 1.34-3 3-3Z"/></svg>
+                                    <span>Log In</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Logged In Publisher Panel -->
+                    <div id="cms-publisher-panel" class="cms-card" style="display: none;">
+                        <div class="publisher-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; gap: 15px;">
+                            <span style="font-size: 0.95rem;">Logged in as <strong style="color: var(--accent);">Editor Dashboard</strong></span>
+                            <button id="cms-logout-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">Log Out</button>
+                        </div>
+
+                        <!-- Add Article Form -->
+                        <form id="cms-publish-form" class="cms-form" style="margin-bottom: 40px; display: grid; gap: 15px;">
+                            <h3 style="font-family: var(--font-serif); font-size: 1.25rem; margin-bottom: 5px; color: var(--text-main);">Publish a New Article</h3>
+                            
+                            <div class="form-group">
+                                <label for="pub-title">Article Headline</label>
+                                <input type="text" id="pub-title" required placeholder="Enter article title..." style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); color: var(--text-main);">
+                            </div>
+
+                            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label for="pub-category">Category</label>
+                                    <select id="pub-category" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); color: var(--text-main);">
                                         <option value="world">World</option>
                                         <option value="technology">Technology</option>
                                         <option value="finance">Finance</option>
@@ -185,39 +209,48 @@
                                         <option value="lifestyle">Lifestyle</option>
                                     </select>
                                 </div>
-                            </div>
-                            <div class="form-row">
                                 <div class="form-group">
-                                    <label for="cms-abstract">Short Abstract</label>
-                                    <input type="text" id="cms-abstract" required placeholder="A brief one-sentence summary of the article (visible on cards)">
+                                    <label for="pub-author">Author / Bylines</label>
+                                    <input type="text" id="pub-author" value="Staff Reporter" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); color: var(--text-main);">
                                 </div>
                             </div>
-                            <div class="form-row flex-row">
-                                <div class="form-group flex-1">
-                                    <label for="cms-image-upload">Upload Cover Image</label>
-                                    <input type="file" id="cms-image-upload" accept="image/*" required>
-                                    <div id="image-preview-container" style="margin-top: 10px; display: none;">
-                                        <img id="image-preview" src="" alt="Preview" style="max-height: 120px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-                                    </div>
-                                </div>
-                                <div class="form-group flex-1">
-                                    <label for="cms-tags">Tag</label>
-                                    <input type="text" id="cms-tags" required placeholder="e.g. GLOBAL ACCORD, BREAKTHROUGH">
-                                </div>
+
+                            <div class="form-group">
+                                <label for="pub-image">Cover Image Selection</label>
+                                <select id="pub-image" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); color: var(--text-main); margin-bottom: 10px;">
+                                    <option value="assets/tech.png">Technology Image (Default)</option>
+                                    <option value="assets/finance.png">Finance Image (Default)</option>
+                                    <option value="assets/environment.png">Environment Image (Default)</option>
+                                    <option value="custom">Custom Image URL...</option>
+                                </select>
+                                <input type="url" id="pub-image-custom" placeholder="Or paste custom image URL here (https://...)" style="display: none; width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); color: var(--text-main);">
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="cms-content">Article Content (HTML formatting allowed)</label>
-                                    <textarea id="cms-content" required rows="12" placeholder="Write full article body here. Use multiple paragraphs. You can use standard <p>, <strong>, and <em> HTML tags."></textarea>
-                                </div>
+
+                            <div class="form-group">
+                                <label for="pub-abstract">Abstract / Excerpt (Max 150 characters)</label>
+                                <input type="text" id="pub-abstract" required placeholder="Write a short summary..." maxlength="150" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); color: var(--text-main);">
                             </div>
-                            <div class="form-actions">
-                                <button type="submit" class="btn btn-primary btn-large">
-                                    <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2l-15 2v7z"/></svg>
-                                    <span>Publish Article</span>
+
+                            <div class="form-group">
+                                <label for="pub-content">Full Article Content (HTML allowed)</label>
+                                <textarea id="pub-content" required placeholder="Write the main story body here..." style="width: 100%; min-height: 180px; padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); color: var(--text-main); font-family: inherit; resize: vertical; line-height: 1.5;"></textarea>
+                            </div>
+
+                            <div class="form-actions" style="margin-top: 10px;">
+                                <button type="submit" class="btn btn-primary btn-large" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <svg class="icon" viewBox="0 0 24 24" style="width: 18px; height: 18px;"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm1 10h3l-4 4l-4-4h3V8h2v4z"/></svg>
+                                    <span>Publish Instantly</span>
                                 </button>
                             </div>
                         </form>
+
+                        <!-- Published Articles Manager -->
+                        <div class="cms-articles-manager">
+                            <h3 style="border-top: 1px solid var(--border-color); padding-top: 25px; margin-bottom: 15px; font-family: var(--font-serif); font-size: 1.25rem;">Manage Published Articles</h3>
+                            <div id="cms-articles-list" style="display: grid; gap: 12px;">
+                                <!-- Dynamically loaded by JS -->
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -299,36 +332,41 @@
 
                 <!-- Weather Card Widget -->
                 <div class="widget-card weather-widget">
-                    <h3 class="widget-title">Regional Weather</h3>
+                    <h3 class="widget-title">Live Weather</h3>
                     <div class="weather-box">
                         <div class="weather-main">
                             <div id="weather-detail-icon" class="weather-detail-icon">
                                 <!-- Dynamic SVG Weather Icon loaded by JS -->
                             </div>
                             <div class="weather-temp-info">
-                                <span id="weather-detail-temp" class="weather-main-temp">24°C</span>
-                                <span id="weather-detail-desc" class="weather-main-desc">Sunny Skies</span>
+                                <span id="weather-detail-temp" class="weather-main-temp">--°C</span>
+                                <span id="weather-detail-desc" class="weather-main-desc">Loading...</span>
                             </div>
                         </div>
                         <div class="weather-details-grid">
                             <div class="weather-detail-item">
                                 <span class="weather-detail-label">Humidity</span>
-                                <span id="weather-detail-humidity" class="weather-detail-val">45%</span>
+                                <span id="weather-detail-humidity" class="weather-detail-val">--%</span>
                             </div>
                             <div class="weather-detail-item">
                                 <span class="weather-detail-label">Wind</span>
-                                <span id="weather-detail-wind" class="weather-detail-val">12 km/h</span>
+                                <span id="weather-detail-wind" class="weather-detail-val">-- km/h</span>
                             </div>
-                            <div class="weather-detail-item">
+                            <div class="weather-detail-item" style="grid-column: span 2; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                                 <span class="weather-detail-label">Location</span>
-                                <select id="weather-city-selector" aria-label="Change Weather City">
-                                    <option value="new_delhi" selected>New Delhi, IND</option>
-                                    <option value="mumbai">Mumbai, IND</option>
-                                    <option value="bengaluru">Bengaluru, IND</option>
-                                    <option value="kolkata">Kolkata, IND</option>
-                                    <option value="chennai">Chennai, IND</option>
-                                    <option value="hyderabad">Hyderabad, IND</option>
-                                </select>
+                                <div style="display: flex; align-items: center; gap: 4px; flex: 1;">
+                                    <select id="weather-city-selector" aria-label="Change Weather City" style="flex: 1; padding: 4px 6px;">
+                                        <option value="new_delhi" selected>New Delhi, IND</option>
+                                        <option value="mumbai">Mumbai, IND</option>
+                                        <option value="bengaluru">Bengaluru, IND</option>
+                                        <option value="kolkata">Kolkata, IND</option>
+                                        <option value="chennai">Chennai, IND</option>
+                                        <option value="hyderabad">Hyderabad, IND</option>
+                                    </select>
+                                    <button id="weather-location-btn" class="btn-icon" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center;" title="Use My Location">
+                                        <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:currentColor;"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4s4-1.79 4-4s-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1c0-.55-.45-1-1-1s-1 .45-1 1v2.06A8.994 8.994 0 0 0 3.06 11H1c-.55 0-1 .45-1 1s.45 1 1 1h2.06A8.994 8.994 0 0 0 11 20.94V23c0 .55.45 1 1 1s1-.45 1-1v-2.06A8.994 8.994 0 0 0 20.94 13H23c.55 0 1-.45 1-1s-.45-1-1-1h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7s7 3.13 7 7s-3.13 7-7 7z"/></svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -414,6 +452,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Main Logic Script -->
-    <script src="app.js"></script>
+    <script src="app-new.js?v=3"></script>
 </body>
 </html>
