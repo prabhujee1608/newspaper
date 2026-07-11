@@ -62,6 +62,30 @@ const DEFAULT_SEED_ARTICLES = [
 const DEFAULT_WORDPRESS_URL = "https://techcrunch.com";
 let WORDPRESS_SITE_URL = localStorage.getItem("wordpress_site_url") || DEFAULT_WORDPRESS_URL;
 
+const BACKEND_API_URL = "https://newspaper-production-2897.up.railway.app/api/news";
+
+async function fetchLocalPublisherNews() {
+    try {
+        const response = await fetch(BACKEND_API_URL);
+        if (!response.ok) throw new Error("Failed to fetch news from backend");
+        const data = await response.json();
+        if (data && Array.isArray(data)) {
+            articles = data;
+            localStorage.setItem("the_chronicle_articles", JSON.stringify(articles));
+        }
+    } catch (err) {
+        console.warn("Backend fetch failed, using local offline news cache:", err);
+        const cached = localStorage.getItem("the_chronicle_articles");
+        if (cached) {
+            articles = JSON.parse(cached);
+        } else {
+            articles = DEFAULT_SEED_ARTICLES;
+        }
+    }
+    renderArticlesList();
+    renderTrendingList();
+}
+
 // Live Coordinates mapping for Preset Weather Cities
 const CITY_COORDINATES = {
     new_delhi: { name: "New Delhi, IND", lat: 28.6139, lon: 77.2090 },
@@ -129,7 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initTTSVoices();
 
     // 9. Perform initial render of feed
-    renderArticlesList();
+    fetchLocalPublisherNews();
     
     // 10. Load legal & about page content from WordPress or local cache
     loadLegalPages();
@@ -1008,23 +1032,41 @@ function initAdminPanel() {
                 content: content
             };
 
-            // Prepend new article to the list
-            articles.unshift(newArticle);
-            localStorage.setItem("the_chronicle_articles", JSON.stringify(articles));
-
-            showToast("Article published successfully!", "success");
-            
-            // Reset form
-            publishForm.reset();
-            if (customImageInput) {
-                customImageInput.style.display = "none";
-                customImageInput.required = false;
-            }
-
-            // Re-render homepage list and manager
-            renderAdminArticlesManager();
-            renderArticlesList();
-            renderTrendingList();
+            // Send to backend
+            fetch(BACKEND_API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(newArticle)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Failed to publish to backend");
+                return response.json();
+            })
+            .then(data => {
+                showToast("Article published successfully!", "success");
+                articles.unshift(newArticle);
+                localStorage.setItem("the_chronicle_articles", JSON.stringify(articles));
+            })
+            .catch(err => {
+                console.error("Publish to backend failed:", err);
+                showToast("Publish failed on server, saved locally.", "alert");
+                articles.unshift(newArticle);
+                localStorage.setItem("the_chronicle_articles", JSON.stringify(articles));
+            })
+            .finally(() => {
+                // Reset form
+                publishForm.reset();
+                if (customImageInput) {
+                    customImageInput.style.display = "none";
+                    customImageInput.required = false;
+                }
+                // Re-render homepage list and manager
+                renderAdminArticlesManager();
+                renderArticlesList();
+                renderTrendingList();
+            });
         });
     }
 
@@ -1057,12 +1099,24 @@ function renderAdminArticlesManager() {
         btn.addEventListener("click", (e) => {
             const id = e.target.getAttribute("data-id");
             if (confirm("Are you sure you want to delete this article?")) {
-                articles = articles.filter(art => art.id !== id);
-                localStorage.setItem("the_chronicle_articles", JSON.stringify(articles));
-                showToast("Article deleted successfully.", "success");
-                renderAdminArticlesManager();
-                renderArticlesList();
-                renderTrendingList();
+                fetch(`${BACKEND_API_URL}/${id}`, {
+                    method: "DELETE"
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error("Failed to delete from backend");
+                    showToast("Article deleted successfully.", "success");
+                })
+                .catch(err => {
+                    console.error("Delete from backend failed:", err);
+                    showToast("Delete failed on server, removed locally.", "alert");
+                })
+                .finally(() => {
+                    articles = articles.filter(art => art.id !== id);
+                    localStorage.setItem("the_chronicle_articles", JSON.stringify(articles));
+                    renderAdminArticlesManager();
+                    renderArticlesList();
+                    renderTrendingList();
+                });
             }
         });
     });
