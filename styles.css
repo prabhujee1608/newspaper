@@ -245,6 +245,9 @@ input, textarea, select, button {
 .badge-finance { background-color: #047857; }
 .badge-environment { background-color: #b45309; }
 .badge-lifestyle { background-color: #6d28d9; }
+.badge-politics { background-color: #b91c1c; }
+.badge-sports { background-color: #0f766e; }
+.badge-entertainment { background-color: #be185d; }
 
 /* SVG Icons Helper */
 .icon {

@@ -2,14 +2,47 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 8090;
 const DB_FILE = path.join(__dirname, 'database.json');
 
+// General Rate Limiter: max 100 requests per 15 minutes
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 150,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests from this IP, please try again later.' }
+});
+
+// Admin Limiter: max 15 operations per minute
+const adminActionLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000,
+    max: 15,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many admin operations from this IP, please slow down.' }
+});
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
+app.use('/api/', generalLimiter);
+
+// Authentication middleware checking custom Bearer token
+function authenticateAdmin(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized: Missing or malformed admin token' });
+    }
+    const token = authHeader.split(' ')[1];
+    if (token !== 'admin-secret-session-token') {
+        return res.status(403).json({ error: 'Forbidden: Invalid admin token credentials' });
+    }
+    next();
+}
 
 // Initialize database file with premium seed articles if it doesn't exist
 if (!fs.existsSync(DB_FILE)) {
@@ -61,6 +94,54 @@ if (!fs.existsSync(DB_FILE)) {
                 <p>Market analysts are calling this the "Quantum Boom," as shares of chip design agencies, server manufacturers, and power grid operators surged between 8% and 15% in a single session.</p>
                 <p>“What we are seeing is not just speculative momentum; it's capital pricing in the next paradigm of computational infrastructure,” said chief financial strategist Alan Vance.</p>
             `
+        },
+        {
+            id: "art-4",
+            title: "Democratic Union Polls Scheduled for Mid-November",
+            author: "Jameson Croft",
+            category: "politics",
+            date: "July 8, 2026",
+            abstract: "The Global Election Commission has officially announced scheduling for the long-awaited GDU assembly votes.",
+            image: "assets/tech.png",
+            tag: "POLITICS",
+            trending: true,
+            content: `
+                <p><strong>BRUSSELS</strong> — The Global Election Commission announced today that elections for the GDU Representative Assembly will take place over three days in mid-November.</p>
+                <p>Over 80 million voters are registered to elect delegates who will oversee international trade, standard regulations, and mutual development programs.</p>
+                <p>Key political coalitions have already begun aligning campaign platforms around renewable energy investments and cybersecurity standards.</p>
+            `
+        },
+        {
+            id: "art-5",
+            title: "Underdogs Clinch Victory in Thrilling Football Finals",
+            author: "Marcus Vance",
+            category: "sports",
+            date: "July 7, 2026",
+            abstract: "Against all oddsmaker predictions, the Titans managed a dramatic 3-2 overtime victory in the League championship.",
+            image: "assets/finance.png",
+            tag: "SPORTS",
+            trending: false,
+            content: `
+                <p><strong>LONDON</strong> — In one of the greatest upsets in modern sports history, the Titans walked away as tournament champions after scoring a critical overtime goal.</p>
+                <p>“We believed in our system, stayed disciplined, and played our hearts out,” said head coach Darren Ross during a post-match press conference.</p>
+                <p>Fans celebrated late into the night, signaling a resurgence for the franchise after five consecutive seasons of missing out on playoff qualifications.</p>
+            `
+        },
+        {
+            id: "art-6",
+            title: "Sci-Fi Indie Sensation Wins Palme d'Or at Cannes",
+            author: "Aria Thorne",
+            category: "entertainment",
+            date: "July 6, 2026",
+            abstract: "A low-budget independent film centering on memory deletion has taken the top honor at the prestigious festival.",
+            image: "assets/environment.png",
+            tag: "ENTERTAINMENT",
+            trending: false,
+            content: `
+                <p><strong>CANNES</strong> — The indie sci-fi drama 'Echoes of You' has been awarded the Palme d'Or, beating major studio contenders in a surprising festival finale.</p>
+                <p>The film, written and directed by newcomer Clara Zhao, was praised for its emotional depth and minimalistic production design.</p>
+                <p>“We wanted to tell an intimate human story using sci-fi elements to amplify what it feels like to forget,” Zhao commented during her acceptance speech.</p>
+            `
         }
     ];
     fs.writeFileSync(DB_FILE, JSON.stringify(defaultArticles, null, 2), 'utf8');
@@ -82,11 +163,29 @@ app.get('/api/news', (req, res) => {
     });
 });
 
-// POST article
-app.post('/api/news', (req, res) => {
+// POST article (Protected: Admin authentication + Admin rate limiter + Input Validation)
+app.post('/api/news', adminActionLimiter, authenticateAdmin, (req, res) => {
     const newArticle = req.body;
-    if (!newArticle || !newArticle.id) {
-        return res.status(400).json({ error: 'Invalid article data' });
+    
+    // Server-side robust validation
+    if (!newArticle || !newArticle.id || !newArticle.title || !newArticle.content || !newArticle.author || !newArticle.category) {
+        return res.status(400).json({ error: 'Invalid article data. Missing required fields (id, title, content, author, category).' });
+    }
+
+    // Clean, sanitize and validate values
+    newArticle.title = String(newArticle.title).trim();
+    newArticle.content = String(newArticle.content).trim();
+    newArticle.author = String(newArticle.author).trim();
+    newArticle.category = String(newArticle.category).trim().toLowerCase();
+    newArticle.abstract = String(newArticle.abstract || '').trim().substring(0, 150);
+    newArticle.image = String(newArticle.image || 'assets/tech.png').trim();
+    newArticle.tag = String(newArticle.category).toUpperCase();
+    newArticle.trending = req.body.trending === true;
+    newArticle.date = newArticle.date || new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
+    const validCategories = ['politics', 'world', 'technology', 'sports', 'finance', 'entertainment', 'environment', 'lifestyle'];
+    if (!validCategories.includes(newArticle.category)) {
+        return res.status(400).json({ error: 'Invalid category specified.' });
     }
 
     fs.readFile(DB_FILE, 'utf8', (err, data) => {
@@ -115,8 +214,8 @@ app.post('/api/news', (req, res) => {
     });
 });
 
-// DELETE article
-app.delete('/api/news/:id', (req, res) => {
+// DELETE article (Protected: Admin authentication + Admin rate limiter)
+app.delete('/api/news/:id', adminActionLimiter, authenticateAdmin, (req, res) => {
     const id = req.params.id;
 
     fs.readFile(DB_FILE, 'utf8', (err, data) => {
@@ -145,7 +244,7 @@ app.delete('/api/news/:id', (req, res) => {
     });
 });
 
-// Fallback to index.html for main routes
+// Fallback to index.html for main SPA routes
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });

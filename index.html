@@ -63,9 +63,12 @@
         <div class="container nav-flex">
             <div id="category-tabs" class="nav-links">
                 <button class="nav-tab active" data-category="all">All News</button>
+                <button class="nav-tab" data-category="politics">Politics</button>
                 <button class="nav-tab" data-category="world">World</button>
                 <button class="nav-tab" data-category="technology">Technology</button>
+                <button class="nav-tab" data-category="sports">Sports</button>
                 <button class="nav-tab" data-category="finance">Finance</button>
+                <button class="nav-tab" data-category="entertainment">Entertainment</button>
                 <button class="nav-tab" data-category="environment">Environment</button>
                 <button class="nav-tab" data-category="lifestyle">Lifestyle</button>
             </div>
@@ -91,6 +94,7 @@
                         <span>Latest Stories</span>
                     </div>
                     <div id="articles-grid" class="articles-grid-container"></div>
+                    <div id="load-more-container" style="text-align: center; margin-top: 30px; margin-bottom: 20px;"></div>
                 </div>
 
                 <!-- BOOKMARKS VIEW -->
@@ -202,9 +206,12 @@
                                 <div class="form-group">
                                     <label for="pub-category">Category</label>
                                     <select id="pub-category" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); color: var(--text-main);">
+                                        <option value="politics">Politics</option>
                                         <option value="world">World</option>
                                         <option value="technology">Technology</option>
+                                        <option value="sports">Sports</option>
                                         <option value="finance">Finance</option>
+                                        <option value="entertainment">Entertainment</option>
                                         <option value="environment">Environment</option>
                                         <option value="lifestyle">Lifestyle</option>
                                     </select>

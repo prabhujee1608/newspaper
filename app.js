@@ -112,10 +112,10 @@ let stocks = [
 let articles = [];
 let bookmarks = [];
 let comments = {};
-let currentView = "feed"; // feed, bookmarks, admin, article
-let currentCategory = "all";
-let searchQuery = "";
-let activeArticleId = null;
+let currentView = "feed"; // views: feed, article, bookmarks, about, privacy, terms, cms
+let currentCategory = "all"; // categories: all, world, technology, finance, environment, lifestyle, politics, sports, entertainment
+let displayedArticlesCount = 6;
+let adminToken = sessionStorage.getItem("admin_token") || "";
 let fontSizeClass = "font-size-medium";
 
 // Text to Speech State
@@ -228,6 +228,7 @@ function initNavigation() {
             const category = tab.getAttribute("data-category");
             resetSearch();
             currentCategory = category;
+            displayedArticlesCount = 6;
             
             // Highlight active tab
             categoryTabs.forEach(t => t.classList.remove("active"));
@@ -322,7 +323,7 @@ function initNavigation() {
             document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
             document.getElementById("view-feed").classList.add("active");
         }
-        
+        displayedArticlesCount = 6;
         renderArticlesList();
     });
 
@@ -371,6 +372,7 @@ function switchView(viewName) {
 
     // 4. Trigger specific renders
     if (viewName === "feed") {
+        displayedArticlesCount = 6;
         renderArticlesList();
     } else if (viewName === "bookmarks") {
         renderBookmarksList();
@@ -388,6 +390,14 @@ function switchView(viewName) {
 function renderArticlesList() {
     const heroContainer = document.getElementById("hero-article-container");
     const gridContainer = document.getElementById("articles-grid");
+    const loadMoreContainer = document.getElementById("load-more-container");
+
+    // Dynamic SEO updating
+    document.title = "Jan Jagriti Network | Premium Global Journalism";
+    const descMeta = document.querySelector('meta[name="description"]');
+    if (descMeta) {
+        descMeta.setAttribute("content", "Jan Jagriti Network - A premium dynamic newspaper website with live updates, bookmarks, text-to-speech reading, and a CMS dashboard.");
+    }
 
     // Filter articles based on active category & search query
     let filtered = articles;
@@ -417,12 +427,16 @@ function renderArticlesList() {
                 <p>No news articles match your search criteria. Try using different keywords or selecting another category.</p>
             </div>
         `;
+        if (loadMoreContainer) loadMoreContainer.innerHTML = "";
         return;
     }
 
     // The first article in list is rendered in the featured HERO view
     const heroArticle = filtered[0];
-    const gridArticles = filtered.slice(1);
+    
+    // Pagination / Slicing for grid articles
+    const totalCount = filtered.length;
+    const gridArticles = filtered.slice(1, displayedArticlesCount);
 
     // Render HERO
     const readTimeHero = Math.ceil(heroArticle.content.replace(/<[^>]*>/g, '').split(/\s+/).length / 200);
@@ -498,6 +512,21 @@ function renderArticlesList() {
     });
 
     gridContainer.innerHTML = gridHTML;
+
+    // Render Load More Pagination Button
+    if (loadMoreContainer) {
+        if (totalCount > displayedArticlesCount) {
+            loadMoreContainer.innerHTML = `
+                <button id="load-more-btn" class="btn btn-primary" style="padding: 10px 25px; font-weight: 600; cursor: pointer; border-radius: 4px;">Load More Stories</button>
+            `;
+            document.getElementById("load-more-btn").addEventListener("click", () => {
+                displayedArticlesCount += 6;
+                renderArticlesList();
+            });
+        } else {
+            loadMoreContainer.innerHTML = "";
+        }
+    }
 
     // Attach click listeners to all dynamically created reading links
     document.querySelectorAll(".view-article-link").forEach(link => {
@@ -608,6 +637,13 @@ function renderArticleDetail() {
         return;
     }
 
+    // Dynamic SEO update for details page
+    document.title = `${article.title} | Jan Jagriti Network`;
+    const descMeta = document.querySelector('meta[name="description"]');
+    if (descMeta) {
+        descMeta.setAttribute("content", article.abstract);
+    }
+
     // Update bookmark button state
     const isBookmarked = bookmarks.includes(article.id);
     if (isBookmarked) {
@@ -673,6 +709,49 @@ function renderArticleDetail() {
             <span class="article-tag">#JANJAGRITI</span>
         </div>
     `;
+
+    // Render Related Articles (matching category, excluding current)
+    let related = articles.filter(art => art.category === article.category && art.id !== article.id).slice(0, 3);
+    if (related.length < 3) {
+        const fallback = articles.filter(art => art.id !== article.id && !related.some(r => r.id === art.id)).slice(0, 3 - related.length);
+        related = related.concat(fallback);
+    }
+
+    let relatedHTML = "";
+    if (related.length > 0) {
+        relatedHTML = `
+            <div class="related-articles-section" style="margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 30px; margin-bottom: 20px;">
+                <h3 style="font-family: var(--font-serif); font-size: 1.35rem; margin-bottom: 20px; color: var(--text-main);">Related Stories</h3>
+                <div class="related-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    ${related.map(art => `
+                        <div class="related-card" style="display: flex; flex-direction: column; gap: 8px;">
+                            <a href="#" class="view-related-link" data-id="${art.id}" style="text-decoration: none;">
+                                <div style="height: 120px; border-radius: 4px; overflow: hidden; background: #333;">
+                                    <img src="${art.image}" style="width: 100%; height: 100%; object-fit: cover;" alt="${art.title}">
+                                </div>
+                            </a>
+                            <span class="badge badge-${art.category}" style="align-self: flex-start; font-size: 0.65rem; padding: 2px 6px;">${art.category}</span>
+                            <h4 style="font-family: var(--font-serif); font-size: 0.95rem; line-height: 1.3; margin: 0;">
+                                <a href="#" class="view-related-link" data-id="${art.id}" style="color: var(--text-main); text-decoration: none; font-weight: 600;">${art.title}</a>
+                            </h4>
+                        </div>
+                    `).join("")}
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML += relatedHTML;
+
+    // Attach click listeners to related article links
+    container.querySelectorAll(".view-related-link").forEach(link => {
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            activeArticleId = link.getAttribute("data-id");
+            renderArticleDetail();
+            window.scrollTo({ top: 0, behavior: "instant" });
+        });
+    });
 
     // Render comments list
     renderComments();
@@ -979,6 +1058,8 @@ function initAdminPanel() {
             
             if (usernameInput.value.trim() === "admin" && passwordInput.value === "admin123") {
                 sessionStorage.setItem("admin_logged_in", "true");
+                sessionStorage.setItem("admin_token", "admin-secret-session-token");
+                adminToken = "admin-secret-session-token";
                 showToast("Logged in successfully!", "success");
                 checkLoginStatus();
                 // Clear inputs
@@ -994,6 +1075,8 @@ function initAdminPanel() {
     if (logoutBtn) {
         logoutBtn.addEventListener("click", () => {
             sessionStorage.removeItem("admin_logged_in");
+            sessionStorage.removeItem("admin_token");
+            adminToken = "";
             showToast("Logged out successfully.", "success");
             checkLoginStatus();
         });
@@ -1036,7 +1119,8 @@ function initAdminPanel() {
             fetch(BACKEND_API_URL, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${sessionStorage.getItem("admin_token")}`
                 },
                 body: JSON.stringify(newArticle)
             })
@@ -1100,7 +1184,10 @@ function renderAdminArticlesManager() {
             const id = e.target.getAttribute("data-id");
             if (confirm("Are you sure you want to delete this article?")) {
                 fetch(`${BACKEND_API_URL}/${id}`, {
-                    method: "DELETE"
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": `Bearer ${sessionStorage.getItem("admin_token")}`
+                    }
                 })
                 .then(response => {
                     if (!response.ok) throw new Error("Failed to delete from backend");
