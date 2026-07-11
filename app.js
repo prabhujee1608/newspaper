@@ -396,6 +396,11 @@ function switchView(viewName) {
         }
     }
 
+    // 1a. Cancel admin dashboard polling when navigating away from cms view
+    if (currentView === "cms" && viewName !== "cms") {
+        stopAdminStatsPolling();
+    }
+
     // 2. Set active view state
     currentView = viewName;
 
@@ -417,6 +422,11 @@ function switchView(viewName) {
         renderBookmarksList();
     } else if (viewName === "article") {
         renderArticleDetail();
+    } else if (viewName === "cms") {
+        const role = sessionStorage.getItem("admin_role");
+        if (sessionStorage.getItem("admin_logged_in") === "true" && role === "admin") {
+            startAdminStatsPolling();
+        }
     }
 
     // 5. Scroll to top on navigation
@@ -1344,10 +1354,7 @@ function initAdminPanel() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password })
             })
-            .then(res => {
-                if (!res.ok) return res.json().then(d => { throw new Error(d.error || "Login failed") });
-                return res.json();
-            })
+            .then(res => parseJsonResponse(res, "Login failed"))
             .then(data => {
                 sessionStorage.setItem("admin_logged_in", "true");
                 sessionStorage.setItem("admin_role", data.role);
@@ -2495,10 +2502,7 @@ function initReaderAuth() {
                     password: passwordInput.value
                 })
             })
-            .then(res => {
-                if (!res.ok) return res.json().then(d => { throw new Error(d.error || "Login failed") });
-                return res.json();
-            })
+            .then(res => parseJsonResponse(res, "Login failed"))
             .then(data => {
                 readerToken = data.token;
                 readerName = data.name;
@@ -2529,6 +2533,7 @@ function initReaderAuth() {
         signupForm.addEventListener("submit", (e) => {
             e.preventDefault();
             const nameInput = document.getElementById("reader-signup-name");
+            const emailInput = document.getElementById("reader-signup-email");
             const usernameInput = document.getElementById("reader-signup-user");
             const passwordInput = document.getElementById("reader-signup-pass");
             
@@ -2537,17 +2542,16 @@ function initReaderAuth() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     name: nameInput.value.trim(),
+                    email: emailInput.value.trim(),
                     username: usernameInput.value.trim(),
                     password: passwordInput.value
                 })
             })
-            .then(res => {
-                if (!res.ok) return res.json().then(d => { throw new Error(d.error || "Signup failed") });
-                return res.json();
-            })
+            .then(res => parseJsonResponse(res, "Signup failed"))
             .then(data => {
                 showToast("Account created! Please sign in.", "success");
                 nameInput.value = "";
+                emailInput.value = "";
                 usernameInput.value = "";
                 passwordInput.value = "";
                 
@@ -2614,10 +2618,7 @@ function initPaginationControls() {
 function fetchComments() {
     if (!activeArticleId) return;
     fetch(`${window.location.origin}/api/comments/${activeArticleId}`)
-    .then(res => {
-        if (!res.ok) throw new Error("Failed to fetch comments");
-        return res.json();
-    })
+    .then(res => parseJsonResponse(res, "Failed to fetch comments"))
     .then(data => {
         activeCommentsList = data;
         renderComments();
@@ -2688,10 +2689,7 @@ function fetchAdminStats() {
             "Authorization": `Bearer ${adminToken}`
         }
     })
-    .then(res => {
-        if (!res.ok) throw new Error("Failed to load audience stats");
-        return res.json();
-    })
+    .then(res => parseJsonResponse(res, "Failed to load audience stats"))
     .then(data => {
         const readersVal = document.getElementById("metric-registered-readers");
         const loginsVal = document.getElementById("metric-total-logins");
@@ -2712,4 +2710,33 @@ function fetchAdminStats() {
     .catch(err => {
         console.warn("Analytics stats loading error:", err);
     });
+}
+
+let adminStatsInterval = null;
+
+function startAdminStatsPolling() {
+    if (adminStatsInterval) clearInterval(adminStatsInterval);
+    fetchAdminStats();
+    adminStatsInterval = setInterval(fetchAdminStats, 3000);
+}
+
+function stopAdminStatsPolling() {
+    if (adminStatsInterval) {
+        clearInterval(adminStatsInterval);
+        adminStatsInterval = null;
+    }
+}
+
+async function parseJsonResponse(res, defaultError) {
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.error || defaultError);
+        }
+        return data;
+    } else {
+        const text = await res.text();
+        throw new Error(text || defaultError);
+    }
 }

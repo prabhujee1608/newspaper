@@ -12,13 +12,15 @@ const COMMENTS_FILE = path.join(__dirname, 'comments.json');
 const STATS_FILE = path.join(__dirname, 'stats.json');
 const activeReaders = {}; // { [articleId]: { [clientId]: timestamp } }
 
-// General Rate Limiter: max 100 requests per 15 minutes
+// General Rate Limiter: max 150 requests per 15 minutes
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 150,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { error: 'Too many requests from this IP, please try again later.' }
+    handler: (req, res) => {
+        res.status(429).json({ error: 'Too many requests from this IP, please try again later.' });
+    }
 });
 
 // Admin Limiter: max 15 operations per minute
@@ -27,7 +29,9 @@ const adminActionLimiter = rateLimit({
     max: 15,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { error: 'Too many admin operations from this IP, please slow down.' }
+    handler: (req, res) => {
+        res.status(429).json({ error: 'Too many admin operations from this IP, please slow down.' });
+    }
 });
 
 app.use(cors());
@@ -346,13 +350,13 @@ app.delete('/api/news/:id', adminActionLimiter, authenticateAdmin, (req, res) =>
     });
 });
 
-// POST signup reader
 app.post('/api/readers/signup', (req, res) => {
-    const { username, password, name } = req.body;
-    if (!username || !password || !name) {
-        return res.status(400).json({ error: 'Username, password, and name are required.' });
+    const { username, email, password, name } = req.body;
+    if (!username || !email || !password || !name) {
+        return res.status(400).json({ error: 'Username, email, password, and name are required.' });
     }
     const cleanUsername = String(username).trim();
+    const cleanEmail = String(email).trim();
     const cleanPassword = String(password);
     const cleanName = String(name).trim();
 
@@ -365,28 +369,32 @@ app.post('/api/readers/signup', (req, res) => {
             users = [];
         }
         
-        const exists = users.find(u => u.username.toLowerCase() === cleanUsername.toLowerCase());
-        if (exists) {
+        const existsUser = users.find(u => u.username.toLowerCase() === cleanUsername.toLowerCase());
+        if (existsUser) {
             return res.status(400).json({ error: 'Username already taken.' });
         }
 
-        const newUser = { username: cleanUsername, password: cleanPassword, name: cleanName };
+        const existsEmail = users.find(u => u.email && u.email.toLowerCase() === cleanEmail.toLowerCase());
+        if (existsEmail) {
+            return res.status(400).json({ error: 'Email already registered.' });
+        }
+
+        const newUser = { username: cleanUsername, email: cleanEmail, password: cleanPassword, name: cleanName };
         users.push(newUser);
 
         fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf8', (writeErr) => {
             if (writeErr) return res.status(500).json({ error: 'Failed to save user' });
-            res.json({ success: true, user: { username: cleanUsername, name: cleanName } });
+            res.json({ success: true, user: { username: cleanUsername, name: cleanName, email: cleanEmail } });
         });
     });
 });
 
-// POST login reader
 app.post('/api/readers/login', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
-        return res.status(400).json({ error: 'Username and password are required.' });
+        return res.status(400).json({ error: 'Username/Email and password are required.' });
     }
-    const cleanUsername = String(username).trim();
+    const cleanLogin = String(username).trim();
     const cleanPassword = String(password);
 
     fs.readFile(USERS_FILE, 'utf8', (err, data) => {
@@ -398,9 +406,13 @@ app.post('/api/readers/login', (req, res) => {
             users = [];
         }
         
-        const user = users.find(u => u.username.toLowerCase() === cleanUsername.toLowerCase() && u.password === cleanPassword);
+        const user = users.find(u => 
+            (u.username.toLowerCase() === cleanLogin.toLowerCase() || 
+             (u.email && u.email.toLowerCase() === cleanLogin.toLowerCase())) && 
+            u.password === cleanPassword
+        );
         if (!user) {
-            return res.status(400).json({ error: 'Invalid username or password.' });
+            return res.status(400).json({ error: 'Invalid username/email or password.' });
         }
 
         incrementLoginCount();

@@ -13,5 +13,17 @@
     "username": "omkarnathprabhujee16",
     "password": "123456@Omkar",
     "name": "Prabhujee"
+  },
+  {
+    "username": "test_user",
+    "email": "test_user@gmail.com",
+    "password": "password123",
+    "name": "Test User"
+  },
+  {
+    "username": "tester",
+    "email": "tester@gmail.com",
+    "password": "password123",
+    "name": "E2E Tester"
   }
 ]

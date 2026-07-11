@@ -2212,7 +2212,7 @@ html[data-theme="dark"] .newsletter-icon-wrap {
 .logo-link {
     display: flex;
     align-items: center;
-    gap: 8px; /* Closer gap as requested */
+    gap: 5px; /* Extremely close gap */
     text-decoration: none;
 }
 
