@@ -400,10 +400,7 @@ hr {
     white-space: nowrap;
 }
 
-.logo-img {
-    width: 60px;
-    height: 60px;
-}
+
 
 .header-actions {
     display: flex;
