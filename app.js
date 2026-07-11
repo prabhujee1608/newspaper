@@ -117,6 +117,7 @@ let currentCategory = "all"; // categories: all, world, technology, finance, env
 let displayedArticlesCount = 6;
 let adminToken = sessionStorage.getItem("admin_token") || "";
 let fontSizeClass = "font-size-medium";
+let editingArticleId = null;
 
 // Text to Speech State
 let activeSpeechUtterance = null;
@@ -1095,9 +1096,23 @@ function initAdminPanel() {
         if (sessionStorage.getItem("admin_logged_in") === "true") {
             loginPanel.style.display = "none";
             publisherPanel.style.display = "block";
+            
             if (userLabel) {
-                userLabel.textContent = role === "admin" ? "Administrator Dashboard" : "Editor Dashboard";
+                userLabel.textContent = role === "admin" ? "Administrator Dashboard" : "Editor Dashboard (Read-Only Mode)";
             }
+
+            // Disable or enable publish form elements depending on role
+            const formElements = publishForm.querySelectorAll("input, textarea, select, button[type='submit']");
+            formElements.forEach(el => {
+                if (role === "admin") {
+                    el.removeAttribute("disabled");
+                    el.style.opacity = "1";
+                } else {
+                    el.setAttribute("disabled", "true");
+                    el.style.opacity = "0.6";
+                }
+            });
+
             renderAdminArticlesManager();
         } else {
             loginPanel.style.display = "block";
@@ -1197,41 +1212,86 @@ function initAdminPanel() {
             };
 
             // Send to backend
-            fetch(BACKEND_API_URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${sessionStorage.getItem("admin_token")}`
-                },
-                body: JSON.stringify(newArticle)
-            })
-            .then(response => {
-                if (!response.ok) throw new Error("Failed to publish to backend");
-                return response.json();
-            })
-            .then(data => {
-                showToast("Article published successfully!", "success");
-                articles.unshift(newArticle);
-                localStorage.setItem("the_chronicle_articles", JSON.stringify(articles));
-            })
-            .catch(err => {
-                console.error("Publish to backend failed:", err);
-                showToast("Publish failed on server, saved locally.", "alert");
-                articles.unshift(newArticle);
-                localStorage.setItem("the_chronicle_articles", JSON.stringify(articles));
-            })
-            .finally(() => {
-                // Reset form
-                publishForm.reset();
-                if (customImageInput) {
-                    customImageInput.style.display = "none";
-                    customImageInput.required = false;
-                }
-                // Re-render homepage list and manager
-                renderAdminArticlesManager();
-                renderArticlesList();
-                renderTrendingList();
-            });
+            if (editingArticleId) {
+                fetch(`${BACKEND_API_URL}/${editingArticleId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${sessionStorage.getItem("admin_token")}`
+                    },
+                    body: JSON.stringify(newArticle)
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error("Failed to update article");
+                    return response.json();
+                })
+                .then(data => {
+                    showToast("Article updated successfully!", "success");
+                    const index = articles.findIndex(art => art.id === editingArticleId);
+                    if (index !== -1) {
+                        articles[index] = {
+                            ...articles[index],
+                            title: newArticle.title,
+                            author: newArticle.author,
+                            category: newArticle.category,
+                            abstract: newArticle.abstract,
+                            image: newArticle.image,
+                            tag: newArticle.tag,
+                            content: newArticle.content
+                        };
+                        localStorage.setItem("the_chronicle_articles", JSON.stringify(articles));
+                    }
+                })
+                .catch(err => {
+                    console.error("Update failed:", err);
+                    showToast("Failed to update article on server.", "alert");
+                })
+                .finally(() => {
+                    editingArticleId = null;
+                    document.getElementById("cms-form-title").textContent = "Publish a New Article";
+                    document.getElementById("cms-submit-btn-text").textContent = "Publish Instantly";
+                    publishForm.reset();
+                    if (customImageInput) {
+                        customImageInput.style.display = "none";
+                        customImageInput.required = false;
+                    }
+                    renderAdminArticlesManager();
+                    renderArticlesList();
+                    renderTrendingList();
+                });
+            } else {
+                fetch(BACKEND_API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${sessionStorage.getItem("admin_token")}`
+                    },
+                    body: JSON.stringify(newArticle)
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error("Failed to publish to backend");
+                    return response.json();
+                })
+                .then(data => {
+                    showToast("Article published successfully!", "success");
+                    articles.unshift(newArticle);
+                    localStorage.setItem("the_chronicle_articles", JSON.stringify(articles));
+                })
+                .catch(err => {
+                    console.error("Publish to backend failed:", err);
+                    showToast("Publish failed on server.", "alert");
+                })
+                .finally(() => {
+                    publishForm.reset();
+                    if (customImageInput) {
+                        customImageInput.style.display = "none";
+                        customImageInput.required = false;
+                    }
+                    renderAdminArticlesManager();
+                    renderArticlesList();
+                    renderTrendingList();
+                });
+            }
         });
     }
 
@@ -1250,6 +1310,9 @@ function renderAdminArticlesManager() {
     const role = sessionStorage.getItem("admin_role");
     
     listContainer.innerHTML = articles.map(art => {
+        const editButtonHTML = role === "admin" 
+            ? `<button class="btn btn-secondary edit-art-btn" data-id="${art.id}" style="padding: 4px 10px; font-size: 0.85rem; cursor: pointer; margin-right: 5px; color: var(--accent); border-color: rgba(185, 28, 28, 0.3);">Edit</button>`
+            : "";
         const deleteButtonHTML = role === "admin" 
             ? `<button class="btn btn-secondary delete-art-btn" data-id="${art.id}" style="color: #ff4a4a; border-color: rgba(255, 74, 74, 0.3); padding: 4px 10px; font-size: 0.85rem; cursor: pointer;">Delete</button>`
             : `<button class="btn btn-secondary" style="color: var(--text-muted); border-color: var(--border-color); padding: 4px 10px; font-size: 0.85rem; cursor: not-allowed; opacity: 0.5;" disabled title="Only Administrators can delete articles">Delete</button>`;
@@ -1262,15 +1325,60 @@ function renderAdminArticlesManager() {
                         <span>Category: <strong>${art.category}</strong></span> | <span>Author: ${art.author}</span>
                     </div>
                 </div>
-                ${deleteButtonHTML}
+                <div style="display: flex; gap: 5px; align-items: center;">
+                    ${editButtonHTML}
+                    ${deleteButtonHTML}
+                </div>
             </div>
         `;
     }).join("");
 
+    // Bind edit events
+    document.querySelectorAll(".edit-art-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const id = btn.getAttribute("data-id");
+            const art = articles.find(a => a.id === id);
+            if (!art) return;
+            
+            // Populate form
+            document.getElementById("pub-title").value = art.title;
+            document.getElementById("pub-category").value = art.category;
+            document.getElementById("pub-author").value = art.author;
+            document.getElementById("pub-abstract").value = art.abstract;
+            document.getElementById("pub-content").value = art.content;
+            
+            const imageSelector = document.getElementById("pub-image");
+            const customImageInput = document.getElementById("pub-image-custom");
+            
+            if (art.image.startsWith("assets/")) {
+                imageSelector.value = art.image;
+                if (customImageInput) {
+                    customImageInput.style.display = "none";
+                    customImageInput.required = false;
+                }
+            } else {
+                imageSelector.value = "custom";
+                if (customImageInput) {
+                    customImageInput.value = art.image;
+                    customImageInput.style.display = "block";
+                    customImageInput.required = true;
+                }
+            }
+            
+            // Set editing state
+            editingArticleId = art.id;
+            document.getElementById("cms-form-title").textContent = `Edit Article: ${art.title}`;
+            document.getElementById("cms-submit-btn-text").textContent = "Update Article";
+            
+            // Scroll to form
+            document.getElementById("cms-publish-form").scrollIntoView({ behavior: "smooth" });
+        });
+    });
+
     // Bind delete events
     document.querySelectorAll(".delete-art-btn").forEach(btn => {
         btn.addEventListener("click", (e) => {
-            const id = e.target.getAttribute("data-id");
+            const id = btn.getAttribute("data-id");
             if (confirm("Are you sure you want to delete this article?")) {
                 fetch(`${BACKEND_API_URL}/${id}`, {
                     method: "DELETE",

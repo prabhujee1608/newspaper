@@ -174,6 +174,11 @@ app.get('/api/news', (req, res) => {
 
 // POST article (Protected: Admin authentication + Admin rate limiter + Input Validation)
 app.post('/api/news', adminActionLimiter, authenticateAdmin, (req, res) => {
+    // Explicit Admin-only authorization check
+    if (req.userRole !== 'admin') {
+        return res.status(403).json({ error: 'Forbidden: Only Administrators can publish articles.' });
+    }
+
     const newArticle = req.body;
     
     // Server-side robust validation
@@ -192,7 +197,7 @@ app.post('/api/news', adminActionLimiter, authenticateAdmin, (req, res) => {
     newArticle.trending = req.body.trending === true;
     newArticle.date = newArticle.date || new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
-    const validCategories = ['politics', 'world', 'technology', 'sports', 'finance', 'entertainment', 'environment', 'lifestyle'];
+    const validCategories = ['politics', 'world', 'technology', 'sports', 'finance', 'entertainment', 'environment', 'lifestyle', 'india'];
     if (!validCategories.includes(newArticle.category)) {
         return res.status(400).json({ error: 'Invalid category specified.' });
     }
@@ -223,8 +228,68 @@ app.post('/api/news', adminActionLimiter, authenticateAdmin, (req, res) => {
     });
 });
 
+// PUT article (Protected: Admin authentication + Admin rate limiter + Input Validation)
+app.put('/api/news/:id', adminActionLimiter, authenticateAdmin, (req, res) => {
+    // Explicit Admin-only authorization check
+    if (req.userRole !== 'admin') {
+        return res.status(403).json({ error: 'Forbidden: Only Administrators can edit or update articles.' });
+    }
+
+    const id = req.params.id;
+    const updatedArticle = req.body;
+    
+    if (!updatedArticle || !updatedArticle.title || !updatedArticle.content || !updatedArticle.author || !updatedArticle.category) {
+        return res.status(400).json({ error: 'Invalid article data. Missing required fields.' });
+    }
+
+    fs.readFile(DB_FILE, 'utf8', (err, data) => {
+        if (err) {
+            console.error("Error reading database file:", err);
+            return res.status(500).json({ error: 'Failed to read database' });
+        }
+        
+        let articles = [];
+        try {
+            articles = JSON.parse(data);
+        } catch (parseErr) {
+            console.error("Error parsing database JSON:", parseErr);
+            return res.status(500).json({ error: 'Failed to parse database content' });
+        }
+
+        const index = articles.findIndex(art => art.id === id);
+        if (index === -1) {
+            return res.status(404).json({ error: 'Article not found.' });
+        }
+
+        articles[index] = {
+            ...articles[index],
+            title: String(updatedArticle.title).trim(),
+            content: String(updatedArticle.content).trim(),
+            author: String(updatedArticle.author).trim(),
+            category: String(updatedArticle.category).trim().toLowerCase(),
+            abstract: String(updatedArticle.abstract || '').trim().substring(0, 150),
+            image: String(updatedArticle.image || 'assets/tech.png').trim(),
+            tag: String(updatedArticle.category).toUpperCase(),
+            trending: updatedArticle.trending === true
+        };
+
+        fs.writeFile(DB_FILE, JSON.stringify(articles, null, 2), 'utf8', (writeErr) => {
+            if (writeErr) {
+                console.error("Error writing database file:", writeErr);
+                return res.status(500).json({ error: 'Failed to save database' });
+            }
+            res.json({ success: true, article: articles[index] });
+        });
+    });
+});
+
 // DELETE article (Protected: Admin authentication + Admin rate limiter)
 app.delete('/api/news/:id', adminActionLimiter, authenticateAdmin, (req, res) => {
+    // Explicit Admin-only authorization check
+    if (req.userRole !== 'admin') {
+        return res.status(403).json({ error: 'Forbidden: Only Administrators can delete articles.' });
+    }
+
     const id = req.params.id;
 
     fs.readFile(DB_FILE, 'utf8', (err, data) => {
