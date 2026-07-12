@@ -78,23 +78,25 @@ if (!fs.existsSync(LOGINS_FILE)) {
 }
 
 function incrementLoginCount() {
-    fs.readFile(STATS_FILE, 'utf8', (err, data) => {
+    try {
         let stats = { totalLogins: 0 };
-        if (!err) {
-            try { stats = JSON.parse(data); } catch(e) {}
+        if (fs.existsSync(STATS_FILE)) {
+            const data = fs.readFileSync(STATS_FILE, 'utf8');
+            stats = JSON.parse(data);
         }
         stats.totalLogins = (stats.totalLogins || 0) + 1;
-        fs.writeFile(STATS_FILE, JSON.stringify(stats, null, 2), 'utf8', (wErr) => {
-            if (wErr) console.error("Error writing stats database:", wErr);
-        });
-    });
+        fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2), 'utf8');
+    } catch (e) {
+        console.error("Error writing stats database:", e);
+    }
 }
 
 function logLoginAttempt(identifier, status, ip) {
-    fs.readFile(LOGINS_FILE, 'utf8', (err, data) => {
+    try {
         let logs = [];
-        if (!err) {
-            try { logs = JSON.parse(data); } catch(e) {}
+        if (fs.existsSync(LOGINS_FILE)) {
+            const data = fs.readFileSync(LOGINS_FILE, 'utf8');
+            logs = JSON.parse(data);
         }
         logs.unshift({
             identifier,
@@ -103,10 +105,10 @@ function logLoginAttempt(identifier, status, ip) {
             ip: ip || 'unknown'
         });
         if (logs.length > 100) logs = logs.slice(0, 100);
-        fs.writeFile(LOGINS_FILE, JSON.stringify(logs, null, 2), 'utf8', (wErr) => {
-            if (wErr) console.error("Error writing logins database:", wErr);
-        });
-    });
+        fs.writeFileSync(LOGINS_FILE, JSON.stringify(logs, null, 2), 'utf8');
+    } catch (e) {
+        console.error("Error writing logins database:", e);
+    }
 }
 
 // Initialize database file with premium seed articles if it doesn't exist

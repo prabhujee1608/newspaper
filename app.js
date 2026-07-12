@@ -196,6 +196,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // 9. Perform initial render of feed
     fetchLocalPublisherNews();
     
+    // Poll for new articles from the server every 8 seconds so published news is immediately seen by everyone
+    setInterval(fetchLocalPublisherNews, 8000);
+    
     // 10. Load legal & about page content from WordPress or local cache
     loadLegalPages();
 });
