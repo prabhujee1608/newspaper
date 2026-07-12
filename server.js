@@ -13,6 +13,7 @@ const COMMENTS_FILE = isVercel ? path.join('/tmp', 'comments.json') : path.join(
 const STATS_FILE = isVercel ? path.join('/tmp', 'stats.json') : path.join(__dirname, 'stats.json');
 const LOGINS_FILE = isVercel ? path.join('/tmp', 'logins.json') : path.join(__dirname, 'logins.json');
 const activeReaders = {}; // { [articleId]: { [clientId]: timestamp } }
+const activeOtps = {}; // { [username]: otp }
 
 // General Rate Limiter: max 15000 requests per 15 minutes
 const generalLimiter = rateLimit({
@@ -377,11 +378,12 @@ app.delete('/api/news/:id', adminActionLimiter, authenticateAdmin, (req, res) =>
 });
 
 app.post('/api/readers/signup', (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) {
-        return res.status(400).json({ error: 'Username and password are required.' });
+    const { username, mobile, password } = req.body;
+    if (!username || !mobile || !password) {
+        return res.status(400).json({ error: 'Username, mobile number, and password are required.' });
     }
     const cleanUsername = String(username).trim();
+    const cleanMobile = String(mobile).trim();
     const cleanPassword = String(password);
 
     fs.readFile(USERS_FILE, 'utf8', (err, data) => {
@@ -398,7 +400,12 @@ app.post('/api/readers/signup', (req, res) => {
             return res.status(400).json({ error: 'Username already taken.' });
         }
 
-        const newUser = { username: cleanUsername, email: "", mobile: "", password: cleanPassword, name: cleanUsername };
+        const existsMobile = users.find(u => u.mobile && u.mobile.trim() === cleanMobile);
+        if (existsMobile) {
+            return res.status(400).json({ error: 'Mobile number already registered.' });
+        }
+
+        const newUser = { username: cleanUsername, email: "", mobile: cleanMobile, password: cleanPassword, name: cleanUsername };
         users.push(newUser);
 
         fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf8', (writeErr) => {
@@ -449,12 +456,13 @@ app.post('/api/readers/login', (req, res) => {
     });
 });
 
-app.post('/api/readers/recover', (req, res) => {
-    const { username } = req.body;
-    if (!username) {
-        return res.status(400).json({ error: 'Username is required.' });
+app.post('/api/readers/send-otp', (req, res) => {
+    const { username, mobile } = req.body;
+    if (!username || !mobile) {
+        return res.status(400).json({ error: 'Username and mobile number are required.' });
     }
     const cleanUsername = String(username).trim().toLowerCase();
+    const cleanMobile = String(mobile).trim();
 
     fs.readFile(USERS_FILE, 'utf8', (err, data) => {
         if (err) return res.status(500).json({ error: 'Failed to read users database' });
@@ -465,12 +473,50 @@ app.post('/api/readers/recover', (req, res) => {
             users = [];
         }
 
-        const user = users.find(u => u.username.toLowerCase() === cleanUsername);
+        const user = users.find(u => u.username.toLowerCase() === cleanUsername && u.mobile === cleanMobile);
         if (!user) {
-            return res.status(404).json({ error: 'Username not found.' });
+            return res.status(404).json({ error: 'Username or mobile number is incorrect.' });
         }
 
-        res.json({ success: true, password: user.password });
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        activeOtps[cleanUsername] = otp;
+
+        res.json({ success: true, otp, message: `Simulated OTP sent to ${cleanMobile}` });
+    });
+});
+
+app.post('/api/readers/reset-password', (req, res) => {
+    const { username, otp, newPassword } = req.body;
+    if (!username || !otp || !newPassword) {
+        return res.status(400).json({ error: 'All fields are required.' });
+    }
+    const cleanUsername = String(username).trim().toLowerCase();
+
+    if (activeOtps[cleanUsername] !== String(otp)) {
+        return res.status(400).json({ error: 'Invalid OTP code.' });
+    }
+
+    fs.readFile(USERS_FILE, 'utf8', (err, data) => {
+        if (err) return res.status(500).json({ error: 'Failed to read database' });
+        let users = [];
+        try {
+            users = JSON.parse(data);
+        } catch (e) {
+            users = [];
+        }
+
+        const userIndex = users.findIndex(u => u.username.toLowerCase() === cleanUsername);
+        if (userIndex === -1) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
+        users[userIndex].password = String(newPassword);
+
+        fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf8', (wErr) => {
+            if (wErr) return res.status(500).json({ error: 'Failed to save new password' });
+            delete activeOtps[cleanUsername];
+            res.json({ success: true });
+        });
     });
 });
 

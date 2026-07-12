@@ -2546,6 +2546,7 @@ function initReaderAuth() {
         signupForm.addEventListener("submit", (e) => {
             e.preventDefault();
             const usernameInput = document.getElementById("reader-signup-user");
+            const mobileInput = document.getElementById("reader-signup-mobile");
             const passwordInput = document.getElementById("reader-signup-pass");
             
             fetch(`${API_BASE_URL}/api/readers/signup`, {
@@ -2553,6 +2554,7 @@ function initReaderAuth() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     username: usernameInput.value.trim(),
+                    mobile: mobileInput.value.trim(),
                     password: passwordInput.value
                 })
             })
@@ -2560,6 +2562,7 @@ function initReaderAuth() {
             .then(data => {
                 showToast("Account created! Please sign in.", "success");
                 usernameInput.value = "";
+                mobileInput.value = "";
                 passwordInput.value = "";
                 
                 if (loginPane) loginPane.style.display = "block";
@@ -2591,22 +2594,46 @@ function initReaderAuth() {
         });
     }
 
-    // Forgot Password Click Handler
+    // Forgot Password Click Handler (OTP Verification)
     const forgotPassBtn = document.getElementById("reader-forgot-pass-btn");
     if (forgotPassBtn) {
         forgotPassBtn.addEventListener("click", (e) => {
             e.preventDefault();
-            const username = prompt("Enter your Username to recover password:");
+            const username = prompt("Enter your Username:");
             if (!username) return;
+            const mobile = prompt("Enter your registered Mobile Number:");
+            if (!mobile) return;
 
-            fetch(`${API_BASE_URL}/api/readers/recover`, {
+            // Request Simulated OTP
+            fetch(`${API_BASE_URL}/api/readers/send-otp`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username })
+                body: JSON.stringify({ username, mobile })
             })
-            .then(res => parseJsonResponse(res, "Recovery failed"))
+            .then(res => parseJsonResponse(res, "Failed to send OTP"))
             .then(data => {
-                alert(`Your password is: ${data.password}`);
+                alert(`We sent a simulated OTP code to your mobile: ${data.otp}`);
+                const otpCode = prompt("Enter the 6-digit OTP code to verify:");
+                if (!otpCode) return;
+
+                const newPassword = prompt("OTP Verified! Enter your new password:");
+                if (!newPassword) return;
+
+                // Submit password reset
+                return fetch(`${API_BASE_URL}/api/readers/reset-password`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, otp: otpCode, newPassword })
+                });
+            })
+            .then(res => {
+                if (!res) return;
+                return parseJsonResponse(res, "Failed to reset password");
+            })
+            .then(data => {
+                if (data) {
+                    showToast("Password updated successfully! You can now log in.", "success");
+                }
             })
             .catch(err => {
                 showToast(err.message, "alert");
