@@ -421,7 +421,7 @@ app.post('/api/readers/signup', (req, res) => {
 app.post('/api/readers/login', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
-        return res.status(400).json({ error: 'Username/Email/Mobile and password are required.' });
+        return res.status(400).json({ error: 'Username and password are required.' });
     }
     const cleanLogin = String(username).trim();
     const cleanPassword = String(password);
@@ -439,14 +439,12 @@ app.post('/api/readers/login', (req, res) => {
         }
         
         const user = users.find(u => 
-            (u.username.toLowerCase() === cleanLogin.toLowerCase() || 
-             (u.email && u.email.toLowerCase() === cleanLogin.toLowerCase()) ||
-             (u.mobile && u.mobile.trim() === cleanLogin)) && 
+            u.username.toLowerCase() === cleanLogin.toLowerCase() && 
             u.password === cleanPassword
         );
         if (!user) {
             logLoginAttempt(cleanLogin, 'failed (invalid credentials)', req.ip);
-            return res.status(400).json({ error: 'Invalid username/email/mobile or password.' });
+            return res.status(400).json({ error: 'Invalid username or password.' });
         }
 
         incrementLoginCount();

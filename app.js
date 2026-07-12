@@ -62,9 +62,11 @@ const DEFAULT_SEED_ARTICLES = [
 const DEFAULT_WORDPRESS_URL = "https://techcrunch.com";
 let WORDPRESS_SITE_URL = localStorage.getItem("wordpress_site_url") || DEFAULT_WORDPRESS_URL;
 
-const BACKEND_API_URL = window.location.origin.startsWith("http")
-    ? `${window.location.origin}/api/news`
-    : "http://localhost:8090/api/news";
+const API_BASE_URL = window.location.origin.startsWith("http")
+    ? window.location.origin
+    : "http://localhost:8090";
+
+const BACKEND_API_URL = `${API_BASE_URL}/api/news`;
 
 async function fetchLocalPublisherNews() {
     try {
@@ -1245,7 +1247,7 @@ function submitReply(commentId) {
 
     if (!text) return;
 
-    fetch(`${window.location.origin}/api/comments/${activeArticleId}`, {
+    fetch(`${API_BASE_URL}/api/comments/${activeArticleId}`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -1349,7 +1351,7 @@ function initAdminPanel() {
             const username = usernameInput.value.trim();
             const password = passwordInput.value;
             
-            fetch(`${window.location.origin}/api/admin/login`, {
+            fetch(`${API_BASE_URL}/api/admin/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password })
@@ -2494,7 +2496,7 @@ function initReaderAuth() {
             const usernameInput = document.getElementById("reader-login-user");
             const passwordInput = document.getElementById("reader-login-pass");
             
-            fetch(`${window.location.origin}/api/readers/login`, {
+            fetch(`${API_BASE_URL}/api/readers/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -2538,7 +2540,7 @@ function initReaderAuth() {
             const usernameInput = document.getElementById("reader-signup-user");
             const passwordInput = document.getElementById("reader-signup-pass");
             
-            fetch(`${window.location.origin}/api/readers/signup`, {
+            fetch(`${API_BASE_URL}/api/readers/signup`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -2620,7 +2622,7 @@ function initPaginationControls() {
    ========================================================================== */
 function fetchComments() {
     if (!activeArticleId) return;
-    fetch(`${window.location.origin}/api/comments/${activeArticleId}`)
+    fetch(`${API_BASE_URL}/api/comments/${activeArticleId}`)
     .then(res => parseJsonResponse(res, "Failed to fetch comments"))
     .then(data => {
         activeCommentsList = data;
@@ -2635,7 +2637,7 @@ function fetchComments() {
    Article Views and Heartbeats trackers
    ========================================================================== */
 function incrementArticleViews(id) {
-    fetch(`${window.location.origin}/api/news/${id}/view`, { method: "POST" })
+    fetch(`${API_BASE_URL}/api/news/${id}/view`, { method: "POST" })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
@@ -2660,7 +2662,7 @@ function startActiveViewersTracking(id) {
     if (activeCommentsInterval) clearInterval(activeCommentsInterval);
 
     const sendHeartbeat = () => {
-        fetch(`${window.location.origin}/api/news/${id}/heartbeat`, {
+        fetch(`${API_BASE_URL}/api/news/${id}/heartbeat`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ clientId })
@@ -2686,7 +2688,7 @@ function startActiveViewersTracking(id) {
 function fetchAdminStats() {
     if (!adminToken) return;
 
-    fetch(`${window.location.origin}/api/admin/stats`, {
+    fetch(`${API_BASE_URL}/api/admin/stats`, {
         method: "GET",
         headers: {
             "Authorization": `Bearer ${adminToken}`
