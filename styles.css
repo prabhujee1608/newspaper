@@ -1753,6 +1753,22 @@ html[data-theme="dark"] .newsletter-icon-wrap {
         min-width: unset;
         justify-content: center;
         width: 100%;
+        gap: 10px;
+    }
+
+    .header-actions button span {
+        display: none;
+    }
+
+    .header-actions button {
+        padding: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50% !important;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        min-width: unset;
     }
 
     .grid-layout {
@@ -2270,7 +2286,6 @@ html[data-theme="dark"] .newsletter-icon-wrap {
     height: 120px; /* Logo made even bigger */
     width: auto;
     border-radius: 50%;
-    border: 3.5px solid var(--accent);
     transition: transform 0.3s ease, height 0.3s ease;
     margin-right: -8px; /* Pull closer to text */
 }
