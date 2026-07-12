@@ -62,9 +62,17 @@ const DEFAULT_SEED_ARTICLES = [
 const DEFAULT_WORDPRESS_URL = "https://techcrunch.com";
 let WORDPRESS_SITE_URL = localStorage.getItem("wordpress_site_url") || DEFAULT_WORDPRESS_URL;
 
-const API_BASE_URL = window.location.origin.startsWith("http")
-    ? window.location.origin
-    : "http://localhost:8090";
+const API_BASE_URL = (() => {
+    const origin = window.location.origin;
+    if (!origin || !origin.startsWith("http")) {
+        return "http://localhost:8090";
+    }
+    // Fallback to node backend port 8090 if running on another local dev server port (e.g. 5500)
+    if ((origin.includes("localhost") || origin.includes("127.0.0.1")) && window.location.port !== "8090") {
+        return "http://localhost:8090";
+    }
+    return origin;
+})();
 
 const BACKEND_API_URL = `${API_BASE_URL}/api/news`;
 
