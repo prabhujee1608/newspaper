@@ -2534,6 +2534,7 @@ function initReaderAuth() {
             e.preventDefault();
             const nameInput = document.getElementById("reader-signup-name");
             const emailInput = document.getElementById("reader-signup-email");
+            const mobileInput = document.getElementById("reader-signup-mobile");
             const usernameInput = document.getElementById("reader-signup-user");
             const passwordInput = document.getElementById("reader-signup-pass");
             
@@ -2543,6 +2544,7 @@ function initReaderAuth() {
                 body: JSON.stringify({
                     name: nameInput.value.trim(),
                     email: emailInput.value.trim(),
+                    mobile: mobileInput.value.trim(),
                     username: usernameInput.value.trim(),
                     password: passwordInput.value
                 })
@@ -2552,6 +2554,7 @@ function initReaderAuth() {
                 showToast("Account created! Please sign in.", "success");
                 nameInput.value = "";
                 emailInput.value = "";
+                mobileInput.value = "";
                 usernameInput.value = "";
                 passwordInput.value = "";
                 
@@ -2706,6 +2709,40 @@ function fetchAdminStats() {
         
         if (spotlightTitle) spotlightTitle.textContent = data.mostViewedArticle.title;
         if (spotlightViews) spotlightViews.textContent = data.mostViewedArticle.views;
+
+        // Render registered readers list
+        const readersListBody = document.getElementById("admin-readers-list-body");
+        if (readersListBody && data.registeredUsersList) {
+            if (data.registeredUsersList.length === 0) {
+                readersListBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 10px;">No registered readers yet.</td></tr>`;
+            } else {
+                readersListBody.innerHTML = data.registeredUsersList.map(u => `
+                    <tr style="border-bottom: 1px solid var(--border-color-light);">
+                        <td style="padding: 6px 4px; font-weight: 600;">${u.name}</td>
+                        <td style="padding: 6px 4px;">${u.email}</td>
+                        <td style="padding: 6px 4px;">${u.mobile}</td>
+                        <td style="padding: 6px 4px; font-family: monospace;">${u.username}</td>
+                    </tr>
+                `).join("");
+            }
+        }
+
+        // Render login logs list
+        const loginsListBody = document.getElementById("admin-logins-list-body");
+        if (loginsListBody && data.loginLogs) {
+            if (data.loginLogs.length === 0) {
+                loginsListBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 10px;">No login history yet.</td></tr>`;
+            } else {
+                loginsListBody.innerHTML = data.loginLogs.slice(0, 30).map(l => `
+                    <tr style="border-bottom: 1px solid var(--border-color-light);">
+                        <td style="padding: 6px 4px; font-weight: 600;">${l.identifier}</td>
+                        <td style="padding: 6px 4px; font-size: 0.75rem;">${l.timestamp}</td>
+                        <td style="padding: 6px 4px; font-family: monospace;">${l.ip}</td>
+                        <td style="padding: 6px 4px; font-weight: bold; color: ${l.status.includes('success') ? 'var(--success)' : 'var(--accent)'};">${l.status}</td>
+                    </tr>
+                `).join("");
+            }
+        }
     })
     .catch(err => {
         console.warn("Analytics stats loading error:", err);

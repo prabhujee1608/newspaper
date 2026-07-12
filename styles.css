@@ -350,8 +350,8 @@ hr {
 }
 
 .header-top {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 310px 1fr 310px;
     align-items: center;
     gap: 20px;
 }
@@ -362,7 +362,8 @@ hr {
     gap: 4px;
     font-size: 0.85rem;
     color: var(--text-muted);
-    min-width: 200px;
+    min-width: 310px;
+    white-space: nowrap;
 }
 
 .meta-item {
@@ -372,6 +373,10 @@ hr {
 }
 
 .header-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
 }
 
@@ -393,7 +398,7 @@ hr {
     display: flex;
     align-items: center;
     gap: 12px;
-    min-width: 200px;
+    min-width: 310px;
     justify-content: flex-end;
 }
 
@@ -1750,6 +1755,7 @@ html[data-theme="dark"] .newsletter-icon-wrap {
     }
 
     .header-top {
+        display: flex;
         flex-direction: column;
         text-align: center;
         gap: 15px;
@@ -2206,21 +2212,21 @@ html[data-theme="dark"] .newsletter-icon-wrap {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
 }
 
 .logo-link {
     display: flex;
     align-items: center;
-    gap: 5px; /* Extremely close gap */
+    gap: 2px; /* Logo made extremely close to header name */
     text-decoration: none;
 }
 
 .brand-logo-img {
-    height: 95px; /* Enlarged logo image */
+    height: 120px; /* Logo made even bigger */
     width: auto;
     border-radius: 50%;
-    border: 3px solid var(--accent);
+    border: 3.5px solid var(--accent);
     transition: transform 0.3s ease, height 0.3s ease;
 }
 
@@ -2230,9 +2236,9 @@ html[data-theme="dark"] .newsletter-icon-wrap {
 
 .brand-logo-text {
     font-family: var(--font-serif);
-    font-size: 2.5rem; /* Enlarged heading text */
+    font-size: 2.85rem; /* Brand heading text enlarged */
     font-weight: 800;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.03em;
     color: var(--text-primary);
     transition: font-size 0.3s ease;
 }
@@ -2243,7 +2249,7 @@ html[data-theme="dark"] .newsletter-icon-wrap {
     font-weight: 700;
     letter-spacing: 0.18em;
     color: #b91c1c;
-    margin-top: 2px;
+    margin-top: 1px;
 }
 
 /* ==========================================================================

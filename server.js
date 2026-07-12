@@ -10,6 +10,7 @@ const DB_FILE = path.join(__dirname, 'database.json');
 const USERS_FILE = path.join(__dirname, 'users.json');
 const COMMENTS_FILE = path.join(__dirname, 'comments.json');
 const STATS_FILE = path.join(__dirname, 'stats.json');
+const LOGINS_FILE = path.join(__dirname, 'logins.json');
 const activeReaders = {}; // { [articleId]: { [clientId]: timestamp } }
 
 // General Rate Limiter: max 150 requests per 15 minutes
@@ -71,6 +72,9 @@ if (!fs.existsSync(COMMENTS_FILE)) {
 if (!fs.existsSync(STATS_FILE)) {
     fs.writeFileSync(STATS_FILE, JSON.stringify({ totalLogins: 0 }, null, 2), 'utf8');
 }
+if (!fs.existsSync(LOGINS_FILE)) {
+    fs.writeFileSync(LOGINS_FILE, JSON.stringify([], null, 2), 'utf8');
+}
 
 function incrementLoginCount() {
     fs.readFile(STATS_FILE, 'utf8', (err, data) => {
@@ -81,6 +85,25 @@ function incrementLoginCount() {
         stats.totalLogins = (stats.totalLogins || 0) + 1;
         fs.writeFile(STATS_FILE, JSON.stringify(stats, null, 2), 'utf8', (wErr) => {
             if (wErr) console.error("Error writing stats database:", wErr);
+        });
+    });
+}
+
+function logLoginAttempt(identifier, status, ip) {
+    fs.readFile(LOGINS_FILE, 'utf8', (err, data) => {
+        let logs = [];
+        if (!err) {
+            try { logs = JSON.parse(data); } catch(e) {}
+        }
+        logs.unshift({
+            identifier,
+            status,
+            timestamp: new Date().toLocaleString(),
+            ip: ip || 'unknown'
+        });
+        if (logs.length > 100) logs = logs.slice(0, 100);
+        fs.writeFile(LOGINS_FILE, JSON.stringify(logs, null, 2), 'utf8', (wErr) => {
+            if (wErr) console.error("Error writing logins database:", wErr);
         });
     });
 }
@@ -351,12 +374,13 @@ app.delete('/api/news/:id', adminActionLimiter, authenticateAdmin, (req, res) =>
 });
 
 app.post('/api/readers/signup', (req, res) => {
-    const { username, email, password, name } = req.body;
-    if (!username || !email || !password || !name) {
-        return res.status(400).json({ error: 'Username, email, password, and name are required.' });
+    const { username, email, mobile, password, name } = req.body;
+    if (!username || !email || !mobile || !password || !name) {
+        return res.status(400).json({ error: 'Username, email, mobile number, password, and name are required.' });
     }
     const cleanUsername = String(username).trim();
     const cleanEmail = String(email).trim();
+    const cleanMobile = String(mobile).trim();
     const cleanPassword = String(password);
     const cleanName = String(name).trim();
 
@@ -379,12 +403,17 @@ app.post('/api/readers/signup', (req, res) => {
             return res.status(400).json({ error: 'Email already registered.' });
         }
 
-        const newUser = { username: cleanUsername, email: cleanEmail, password: cleanPassword, name: cleanName };
+        const existsMobile = users.find(u => u.mobile && u.mobile.trim() === cleanMobile);
+        if (existsMobile) {
+            return res.status(400).json({ error: 'Mobile number already registered.' });
+        }
+
+        const newUser = { username: cleanUsername, email: cleanEmail, mobile: cleanMobile, password: cleanPassword, name: cleanName };
         users.push(newUser);
 
         fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf8', (writeErr) => {
             if (writeErr) return res.status(500).json({ error: 'Failed to save user' });
-            res.json({ success: true, user: { username: cleanUsername, name: cleanName, email: cleanEmail } });
+            res.json({ success: true, user: { username: cleanUsername, name: cleanName, email: cleanEmail, mobile: cleanMobile } });
         });
     });
 });
@@ -392,13 +421,16 @@ app.post('/api/readers/signup', (req, res) => {
 app.post('/api/readers/login', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
-        return res.status(400).json({ error: 'Username/Email and password are required.' });
+        return res.status(400).json({ error: 'Username/Email/Mobile and password are required.' });
     }
     const cleanLogin = String(username).trim();
     const cleanPassword = String(password);
 
     fs.readFile(USERS_FILE, 'utf8', (err, data) => {
-        if (err) return res.status(500).json({ error: 'Failed to read users database' });
+        if (err) {
+            logLoginAttempt(cleanLogin, 'failed (server error)', req.ip);
+            return res.status(500).json({ error: 'Failed to read users database' });
+        }
         let users = [];
         try {
             users = JSON.parse(data);
@@ -408,14 +440,17 @@ app.post('/api/readers/login', (req, res) => {
         
         const user = users.find(u => 
             (u.username.toLowerCase() === cleanLogin.toLowerCase() || 
-             (u.email && u.email.toLowerCase() === cleanLogin.toLowerCase())) && 
+             (u.email && u.email.toLowerCase() === cleanLogin.toLowerCase()) ||
+             (u.mobile && u.mobile.trim() === cleanLogin)) && 
             u.password === cleanPassword
         );
         if (!user) {
-            return res.status(400).json({ error: 'Invalid username/email or password.' });
+            logLoginAttempt(cleanLogin, 'failed (invalid credentials)', req.ip);
+            return res.status(400).json({ error: 'Invalid username/email/mobile or password.' });
         }
 
         incrementLoginCount();
+        logLoginAttempt(user.username, 'success', req.ip);
 
         res.json({
             success: true,
@@ -436,18 +471,21 @@ app.post('/api/admin/login', (req, res) => {
     const cleanPassword = String(password);
 
     if (cleanUsername === 'omkarnathprabhujee16' && cleanPassword === '123456@Omkar') {
+        logLoginAttempt('admin (' + cleanUsername + ')', 'success', req.ip);
         res.json({
             success: true,
             token: 'admin-secret-session-token',
             role: 'admin'
         });
     } else if (cleanUsername === 'editor' && cleanPassword === 'editor123') {
+        logLoginAttempt('editor (' + cleanUsername + ')', 'success', req.ip);
         res.json({
             success: true,
             token: 'editor-secret-session-token',
             role: 'editor'
         });
     } else {
+        logLoginAttempt(cleanUsername, 'failed (invalid credentials)', req.ip);
         res.status(401).json({ error: 'Invalid administrator or editor credentials.' });
     }
 });
@@ -462,9 +500,17 @@ app.get('/api/admin/stats', authenticateAdmin, (req, res) => {
     // Read users.json to count total registered readers
     fs.readFile(USERS_FILE, 'utf8', (userErr, userData) => {
         let registeredReaders = 0;
+        let registeredUsersList = [];
         if (!userErr) {
             try {
-                registeredReaders = JSON.parse(userData).length;
+                const parsedUsers = JSON.parse(userData);
+                registeredReaders = parsedUsers.length;
+                registeredUsersList = parsedUsers.map(u => ({
+                    name: u.name,
+                    email: u.email,
+                    mobile: u.mobile || 'N/A',
+                    username: u.username
+                }));
             } catch(e) {}
         }
 
@@ -510,13 +556,25 @@ app.get('/api/admin/stats', authenticateAdmin, (req, res) => {
                     }
                 });
 
-                res.json({
-                    success: true,
-                    registeredReaders,
-                    totalLogins,
-                    activeReaders: currentActiveReadersCount,
-                    totalArticleViews,
-                    mostViewedArticle
+                // Read logins.json to send recent login history
+                fs.readFile(LOGINS_FILE, 'utf8', (loginErr, loginData) => {
+                    let loginLogs = [];
+                    if (!loginErr) {
+                        try {
+                            loginLogs = JSON.parse(loginData);
+                        } catch(e) {}
+                    }
+
+                    res.json({
+                        success: true,
+                        registeredReaders,
+                        totalLogins,
+                        activeReaders: currentActiveReadersCount,
+                        totalArticleViews,
+                        mostViewedArticle,
+                        registeredUsersList,
+                        loginLogs
+                    });
                 });
             });
         });
