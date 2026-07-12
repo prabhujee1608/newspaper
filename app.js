@@ -2734,22 +2734,7 @@ function fetchAdminStats() {
         if (spotlightTitle) spotlightTitle.textContent = data.mostViewedArticle.title;
         if (spotlightViews) spotlightViews.textContent = data.mostViewedArticle.views;
 
-        // Render registered readers list
-        const readersListBody = document.getElementById("admin-readers-list-body");
-        if (readersListBody && data.registeredUsersList) {
-            if (data.registeredUsersList.length === 0) {
-                readersListBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 10px;">No registered readers yet.</td></tr>`;
-            } else {
-                readersListBody.innerHTML = data.registeredUsersList.map(u => `
-                    <tr style="border-bottom: 1px solid var(--border-color-light);">
-                        <td style="padding: 6px 4px; font-weight: 600;">${u.name}</td>
-                        <td style="padding: 6px 4px;">${u.email}</td>
-                        <td style="padding: 6px 4px;">${u.mobile}</td>
-                        <td style="padding: 6px 4px; font-family: monospace;">${u.username}</td>
-                    </tr>
-                `).join("");
-            }
-        }
+
 
         // Render login logs list
         const loginsListBody = document.getElementById("admin-logins-list-body");
