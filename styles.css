@@ -2278,7 +2278,7 @@ html[data-theme="dark"] .newsletter-icon-wrap {
 .logo-link {
     display: flex;
     align-items: center;
-    gap: 2px; /* Logo made extremely close to header name */
+    gap: 24px; /* Perfectly balanced 20-30px spacing */
     text-decoration: none;
 }
 
@@ -2287,7 +2287,6 @@ html[data-theme="dark"] .newsletter-icon-wrap {
     width: auto;
     border-radius: 50%;
     transition: transform 0.3s ease, height 0.3s ease;
-    margin-right: -8px; /* Pull closer to text */
 }
 
 .brand-logo-img:hover {
@@ -2301,7 +2300,6 @@ html[data-theme="dark"] .newsletter-icon-wrap {
     letter-spacing: 0.03em;
     color: var(--text-primary);
     transition: font-size 0.3s ease;
-    margin-left: -8px; /* Pull text closer to image */
 }
 
 .site-slogan {
