@@ -6,11 +6,12 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 8090;
-const DB_FILE = path.join(__dirname, 'database.json');
-const USERS_FILE = path.join(__dirname, 'users.json');
-const COMMENTS_FILE = path.join(__dirname, 'comments.json');
-const STATS_FILE = path.join(__dirname, 'stats.json');
-const LOGINS_FILE = path.join(__dirname, 'logins.json');
+const isVercel = process.env.VERCEL;
+const DB_FILE = isVercel ? path.join('/tmp', 'database.json') : path.join(__dirname, 'database.json');
+const USERS_FILE = isVercel ? path.join('/tmp', 'users.json') : path.join(__dirname, 'users.json');
+const COMMENTS_FILE = isVercel ? path.join('/tmp', 'comments.json') : path.join(__dirname, 'comments.json');
+const STATS_FILE = isVercel ? path.join('/tmp', 'stats.json') : path.join(__dirname, 'stats.json');
+const LOGINS_FILE = isVercel ? path.join('/tmp', 'logins.json') : path.join(__dirname, 'logins.json');
 const activeReaders = {}; // { [articleId]: { [clientId]: timestamp } }
 
 // General Rate Limiter: max 15000 requests per 15 minutes
