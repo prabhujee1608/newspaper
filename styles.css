@@ -343,26 +343,46 @@ hr {
    ========================================================================== */
 
 .site-header {
-    border-bottom: 1px solid var(--border-color);
-    padding: 15px 0;
-    background-color: var(--bg-card);
+    border-bottom: 3.5px solid #b91c1c; /* BBC/CNN Red Accent border */
+    background-color: #0b0f19; /* Dark Navy Background */
     transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
-.header-top {
-    display: grid;
-    grid-template-columns: 310px 1fr 310px;
+.header-utility-bar {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 8px 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.utility-flex {
+    display: flex;
+    justify-content: flex-start;
     align-items: center;
-    gap: 20px;
+}
+
+.meta-divider {
+    color: rgba(255, 255, 255, 0.2);
+    margin: 0 10px;
+    font-weight: 300;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
 }
 
 .header-meta {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 0.85rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+    font-size: 0.8rem;
     color: var(--text-muted);
-    min-width: 310px;
+    min-width: unset;
     white-space: nowrap;
 }
 
@@ -374,10 +394,9 @@ hr {
 
 .header-logo {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    text-align: center;
+    justify-content: flex-start;
+    text-align: left;
 }
 
 .logo-link {
@@ -1784,14 +1803,19 @@ html[data-theme="dark"] .newsletter-icon-wrap {
 
 @media (max-width: 768px) {
     .brand-logo-img {
-        height: 70px;
+        height: 55px;
+        width: 55px;
     }
     .brand-logo-text {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
     }
     .site-slogan {
-        font-size: 0.68rem;
-        letter-spacing: 0.12em;
+        font-size: 0.62rem;
+        letter-spacing: 0.08em;
+    }
+    .logo-link {
+        gap: 12px;
+        justify-content: center;
     }
 
     .header-top {
@@ -1888,14 +1912,15 @@ html[data-theme="dark"] .newsletter-icon-wrap {
 
 @media (max-width: 480px) {
     .brand-logo-img {
-        height: 55px;
+        height: 45px;
+        width: 45px;
     }
     .brand-logo-text {
-        font-size: 1.35rem;
+        font-size: 1.3rem;
     }
     .site-slogan {
-        font-size: 0.6rem;
-        letter-spacing: 0.06em;
+        font-size: 0.58rem;
+        letter-spacing: 0.05em;
     }
 
     .footer-links-grid {
@@ -2268,24 +2293,18 @@ html[data-theme="dark"] .newsletter-icon-wrap {
 /* ==========================================================================
    Brand Header Logo Adjustments
    ========================================================================== */
-.header-logo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-}
-
 .logo-link {
     display: flex;
     align-items: center;
-    gap: 24px; /* Perfectly balanced 20-30px spacing */
+    gap: 20px; /* Minimal spacing directly beside the logo */
     text-decoration: none;
 }
 
 .brand-logo-img {
-    height: 120px; /* Logo made even bigger */
-    width: auto;
+    height: 75px; /* Compact circular logo (70-80px) */
+    width: 75px;
     border-radius: 50%;
+    object-fit: cover;
     transition: transform 0.3s ease, height 0.3s ease;
 }
 
@@ -2293,22 +2312,31 @@ html[data-theme="dark"] .newsletter-icon-wrap {
     transform: rotate(5deg) scale(1.02);
 }
 
+.brand-text-block {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+}
+
 .brand-logo-text {
     font-family: var(--font-serif);
-    font-size: 2.85rem; /* Brand heading text enlarged */
+    font-size: 2.3rem; /* Compact aligned layout font size */
     font-weight: 800;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     color: var(--text-primary);
+    line-height: 1.15;
     transition: font-size 0.3s ease;
 }
 
 .site-slogan {
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     text-transform: uppercase;
     font-weight: 700;
-    letter-spacing: 0.18em;
-    color: #b91c1c;
-    margin-top: 1px;
+    letter-spacing: 0.12em;
+    color: #e11d48; /* Red accent tagline */
+    margin-top: 3px;
+    display: block;
 }
 
 /* ==========================================================================

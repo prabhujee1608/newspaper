@@ -20,23 +20,33 @@
 
     <!-- Header Section -->
     <header class="site-header">
-        <div class="header-top container">
-            <div class="header-meta">
-                <span id="live-date" class="meta-item">Thursday, July 9, 2026</span>
-                <span id="header-weather" class="meta-item weather-teaser">
-                    <svg class="icon icon-weather" viewBox="0 0 24 24">
-                        <path fill="currentColor"
-                            d="M12 7a5 5 0 1 1-5 5 5 5 0 0 1 5-5m0 2a3 3 0 1 0 3 3 3 3 0 0 0-3-3m0-7a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1m0 16a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1M3.51 4.93a1 1 0 0 1 1.41 0l1.42 1.42a1 1 0 1 1-1.42 1.42L3.51 6.34a1 1 0 0 1 0-1.41m14.14 14.14a1 1 0 0 1 1.42 0l1.41 1.41a1 1 0 0 1-1.41 1.42l-1.42-1.42a1 1 0 0 1 0-1.41M2 12a1 1 0 0 1 1-1h2a1 1 0 0 1 0 2H3a1 1 0 0 1-1-1m16 0a1 1 0 0 1 1-1h2a1 1 0 0 1 0 2h-2a1 1 0 0 1-1-1M4.93 20.49a1 1 0 0 1 0-1.41l1.42-1.42a1 1 0 1 1 1.42 1.42l-1.42 1.42a1 1 0 0 1-1.42 0M19.07 3.51a1 1 0 0 1 0 1.42l-1.42 1.42a1 1 0 1 1-1.42-1.42l1.42-1.42a1 1 0 0 1 1.42 0Z" />
-                    </svg>
-                    <span id="weather-summary">New York, 24°C Sunny</span>
-                </span>
+        <!-- Top Utility Bar -->
+        <div class="header-utility-bar">
+            <div class="container utility-flex">
+                <div class="header-meta">
+                    <span id="live-date" class="meta-item">Thursday, July 9, 2026</span>
+                    <span class="meta-divider">|</span>
+                    <span id="header-weather" class="meta-item weather-teaser">
+                        <svg class="icon icon-weather" viewBox="0 0 24 24">
+                            <path fill="currentColor"
+                                d="M12 7a5 5 0 1 1-5 5 5 5 0 0 1 5-5m0 2a3 3 0 1 0 3 3 3 3 0 0 0-3-3m0-7a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1m0 16a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1M3.51 4.93a1 1 0 0 1 1.41 0l1.42 1.42a1 1 0 1 1-1.42 1.42L3.51 6.34a1 1 0 0 1 0-1.41m14.14 14.14a1 1 0 0 1 1.42 0l1.41 1.41a1 1 0 0 1-1.41 1.42l-1.42-1.42a1 1 0 0 1 0-1.41M2 12a1 1 0 0 1 1-1h2a1 1 0 0 1 0 2H3a1 1 0 0 1-1-1m16 0a1 1 0 0 1 1-1h2a1 1 0 0 1 0 2h-2a1 1 0 0 1-1-1M4.93 20.49a1 1 0 0 1 0-1.41l1.42-1.42a1 1 0 1 1 1.42 1.42l-1.42 1.42a1 1 0 0 1-1.42 0M19.07 3.51a1 1 0 0 1 0 1.42l-1.42 1.42a1 1 0 1 1-1.42-1.42l1.42-1.42a1 1 0 0 1 1.42 0Z" />
+                        </svg>
+                        <span id="weather-summary">New York, 24°C Sunny</span>
+                    </span>
+                </div>
             </div>
+        </div>
+
+        <!-- Main Header Bar -->
+        <div class="header-top container">
             <div class="header-logo">
                 <a href="#" id="brand-logo" class="logo-link">
                     <img src="assets/logo.jpg" alt="Jan Jagriti Network Logo" class="brand-logo-img">
-                    <span class="brand-logo-text">JAN JAGRITI NETWORK</span>
+                    <div class="brand-text-block">
+                        <span class="brand-logo-text">JAN JAGRITI NETWORK</span>
+                        <span class="site-slogan">Voice of Truth &bull; Voice of the People</span>
+                    </div>
                 </a>
-                <span class="site-slogan">• Voice of Truth &nbsp;•&nbsp; Voice of the People •</span>
             </div>
             <div class="header-actions">
                 <button id="theme-toggle" class="btn-icon" aria-label="Toggle Dark/Light Mode">
