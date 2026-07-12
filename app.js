@@ -2445,11 +2445,19 @@ function initReaderAuth() {
     
     const loginPane = document.getElementById("reader-login-pane");
     const signupPane = document.getElementById("reader-signup-pane");
+    const forgotPane = document.getElementById("reader-forgot-pane");
+    
     const goToSignup = document.getElementById("go-to-signup");
     const goToLogin = document.getElementById("go-to-login");
+    const goToLoginFromForgot = document.getElementById("go-to-login-from-forgot");
+    const forgotPassBtn = document.getElementById("reader-forgot-pass-btn");
     
     const loginForm = document.getElementById("reader-login-form");
     const signupForm = document.getElementById("reader-signup-form");
+    const forgotStep1Form = document.getElementById("reader-forgot-step1-form");
+    const forgotStep2Form = document.getElementById("reader-forgot-step2-form");
+
+    let resetUsername = ""; // Holds username between Step 1 and Step 2
 
     const updateReaderHeaderUI = () => {
         if (readerToken) {
@@ -2468,12 +2476,18 @@ function initReaderAuth() {
     
     updateReaderHeaderUI();
 
+    const showPane = (paneToShow) => {
+        loginPane.style.display = "none";
+        signupPane.style.display = "none";
+        forgotPane.style.display = "none";
+        paneToShow.style.display = "block";
+    };
+
     if (loginBtn) {
         loginBtn.addEventListener("click", () => {
             if (modal) {
                 modal.style.display = "flex";
-                if (loginPane) loginPane.style.display = "block";
-                if (signupPane) signupPane.style.display = "none";
+                showPane(loginPane);
             }
         });
     }
@@ -2484,19 +2498,33 @@ function initReaderAuth() {
         });
     }
 
-    if (goToSignup && loginPane && signupPane) {
+    if (goToSignup) {
         goToSignup.addEventListener("click", (e) => {
             e.preventDefault();
-            loginPane.style.display = "none";
-            signupPane.style.display = "block";
+            showPane(signupPane);
         });
     }
 
-    if (goToLogin && loginPane && signupPane) {
+    if (goToLogin) {
         goToLogin.addEventListener("click", (e) => {
             e.preventDefault();
-            loginPane.style.display = "block";
-            signupPane.style.display = "none";
+            showPane(loginPane);
+        });
+    }
+
+    if (goToLoginFromForgot) {
+        goToLoginFromForgot.addEventListener("click", (e) => {
+            e.preventDefault();
+            showPane(loginPane);
+        });
+    }
+
+    if (forgotPassBtn) {
+        forgotPassBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            showPane(forgotPane);
+            if (forgotStep1Form) forgotStep1Form.style.display = "flex";
+            if (forgotStep2Form) forgotStep2Form.style.display = "none";
         });
     }
 
@@ -2564,9 +2592,70 @@ function initReaderAuth() {
                 usernameInput.value = "";
                 mobileInput.value = "";
                 passwordInput.value = "";
+                showPane(loginPane);
+            })
+            .catch(err => {
+                showToast(err.message, "alert");
+            });
+        });
+    }
+
+    // Forgot Password Step 1: Send OTP Submit
+    if (forgotStep1Form) {
+        forgotStep1Form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const usernameInput = document.getElementById("reader-forgot-user");
+            const mobileInput = document.getElementById("reader-forgot-mobile");
+
+            const username = usernameInput.value.trim();
+            const mobile = mobileInput.value.trim();
+
+            fetch(`${API_BASE_URL}/api/readers/send-otp`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, mobile })
+            })
+            .then(res => parseJsonResponse(res, "Failed to send OTP"))
+            .then(data => {
+                resetUsername = username;
+                showToast(`OTP Code sent (Simulated OTP: ${data.otp})`, "success");
+                alert(`[SIMULATION] Your 6-digit OTP code is: ${data.otp}`);
                 
-                if (loginPane) loginPane.style.display = "block";
-                if (signupPane) signupPane.style.display = "none";
+                forgotStep1Form.style.display = "none";
+                forgotStep2Form.style.display = "flex";
+                
+                usernameInput.value = "";
+                mobileInput.value = "";
+            })
+            .catch(err => {
+                showToast(err.message, "alert");
+            });
+        });
+    }
+
+    // Forgot Password Step 2: Reset Password Submit
+    if (forgotStep2Form) {
+        forgotStep2Form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const otpInput = document.getElementById("reader-forgot-otp");
+            const newpassInput = document.getElementById("reader-forgot-newpass");
+
+            const otp = otpInput.value.trim();
+            const newPassword = newpassInput.value;
+
+            fetch(`${API_BASE_URL}/api/readers/reset-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: resetUsername, otp, newPassword })
+            })
+            .then(res => parseJsonResponse(res, "Failed to reset password"))
+            .then(data => {
+                showToast("Password reset successful! Please log in.", "success");
+                showPane(loginPane);
+                
+                otpInput.value = "";
+                newpassInput.value = "";
+                resetUsername = "";
             })
             .catch(err => {
                 showToast(err.message, "alert");
@@ -2591,53 +2680,6 @@ function initReaderAuth() {
             if (currentView === "article") {
                 renderComments();
             }
-        });
-    }
-
-    // Forgot Password Click Handler (OTP Verification)
-    const forgotPassBtn = document.getElementById("reader-forgot-pass-btn");
-    if (forgotPassBtn) {
-        forgotPassBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            const username = prompt("Enter your Username:");
-            if (!username) return;
-            const mobile = prompt("Enter your registered Mobile Number:");
-            if (!mobile) return;
-
-            // Request Simulated OTP
-            fetch(`${API_BASE_URL}/api/readers/send-otp`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, mobile })
-            })
-            .then(res => parseJsonResponse(res, "Failed to send OTP"))
-            .then(data => {
-                alert(`We sent a simulated OTP code to your mobile: ${data.otp}`);
-                const otpCode = prompt("Enter the 6-digit OTP code to verify:");
-                if (!otpCode) return;
-
-                const newPassword = prompt("OTP Verified! Enter your new password:");
-                if (!newPassword) return;
-
-                // Submit password reset
-                return fetch(`${API_BASE_URL}/api/readers/reset-password`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username, otp: otpCode, newPassword })
-                });
-            })
-            .then(res => {
-                if (!res) return;
-                return parseJsonResponse(res, "Failed to reset password");
-            })
-            .then(data => {
-                if (data) {
-                    showToast("Password updated successfully! You can now log in.", "success");
-                }
-            })
-            .catch(err => {
-                showToast(err.message, "alert");
-            });
         });
     }
 }
