@@ -396,8 +396,8 @@ function switchView(viewName) {
         }
     }
 
-    // 1a. Cancel admin dashboard polling when navigating away from cms view
-    if (currentView === "cms" && viewName !== "cms") {
+    // 1a. Cancel admin dashboard polling when navigating away from admin view
+    if (currentView === "admin" && viewName !== "admin") {
         stopAdminStatsPolling();
     }
 
@@ -422,7 +422,7 @@ function switchView(viewName) {
         renderBookmarksList();
     } else if (viewName === "article") {
         renderArticleDetail();
-    } else if (viewName === "cms") {
+    } else if (viewName === "admin") {
         const role = sessionStorage.getItem("admin_role");
         if (sessionStorage.getItem("admin_logged_in") === "true" && role === "admin") {
             startAdminStatsPolling();

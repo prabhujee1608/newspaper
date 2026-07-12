@@ -2228,6 +2228,7 @@ html[data-theme="dark"] .newsletter-icon-wrap {
     border-radius: 50%;
     border: 3.5px solid var(--accent);
     transition: transform 0.3s ease, height 0.3s ease;
+    margin-right: -8px; /* Pull closer to text */
 }
 
 .brand-logo-img:hover {
@@ -2241,6 +2242,7 @@ html[data-theme="dark"] .newsletter-icon-wrap {
     letter-spacing: 0.03em;
     color: var(--text-primary);
     transition: font-size 0.3s ease;
+    margin-left: -8px; /* Pull text closer to image */
 }
 
 .site-slogan {
