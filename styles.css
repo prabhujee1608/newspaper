@@ -1739,8 +1739,13 @@ html[data-theme="dark"] .newsletter-icon-wrap {
     }
 
     .header-meta {
-        min-width: unset;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
         align-items: center;
+        gap: 15px;
+        min-width: unset;
         width: 100%;
     }
 
@@ -1781,8 +1786,14 @@ html[data-theme="dark"] .newsletter-icon-wrap {
     }
 
     .header-meta {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
         align-items: center;
+        gap: 12px;
         min-width: unset;
+        width: 100%;
     }
 
     .header-actions {
@@ -1882,6 +1893,20 @@ html[data-theme="dark"] .newsletter-icon-wrap {
 
     .nav-links {
         padding: 5px 10px;
+        gap: 8px;
+    }
+}
+
+@media (max-width: 600px) {
+    .header-actions button span {
+        display: none;
+    }
+    .header-actions button {
+        padding: 8px;
+        min-width: unset;
+        border-radius: var(--radius-full);
+    }
+    .header-actions {
         gap: 8px;
     }
 }
