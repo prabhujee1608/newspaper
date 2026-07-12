@@ -13,10 +13,10 @@ const STATS_FILE = path.join(__dirname, 'stats.json');
 const LOGINS_FILE = path.join(__dirname, 'logins.json');
 const activeReaders = {}; // { [articleId]: { [clientId]: timestamp } }
 
-// General Rate Limiter: max 150 requests per 15 minutes
+// General Rate Limiter: max 15000 requests per 15 minutes
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 150,
+    max: 15000,
     standardHeaders: true,
     legacyHeaders: false,
     handler: (req, res) => {
@@ -24,10 +24,10 @@ const generalLimiter = rateLimit({
     }
 });
 
-// Admin Limiter: max 15 operations per minute
+// Admin Limiter: max 1000 operations per minute
 const adminActionLimiter = rateLimit({
     windowMs: 1 * 60 * 1000,
-    max: 15,
+    max: 1000,
     standardHeaders: true,
     legacyHeaders: false,
     handler: (req, res) => {
@@ -374,15 +374,12 @@ app.delete('/api/news/:id', adminActionLimiter, authenticateAdmin, (req, res) =>
 });
 
 app.post('/api/readers/signup', (req, res) => {
-    const { username, email, mobile, password, name } = req.body;
-    if (!username || !email || !mobile || !password || !name) {
-        return res.status(400).json({ error: 'Username, email, mobile number, password, and name are required.' });
+    const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required.' });
     }
     const cleanUsername = String(username).trim();
-    const cleanEmail = String(email).trim();
-    const cleanMobile = String(mobile).trim();
     const cleanPassword = String(password);
-    const cleanName = String(name).trim();
 
     fs.readFile(USERS_FILE, 'utf8', (err, data) => {
         if (err) return res.status(500).json({ error: 'Failed to read users database' });
@@ -398,22 +395,12 @@ app.post('/api/readers/signup', (req, res) => {
             return res.status(400).json({ error: 'Username already taken.' });
         }
 
-        const existsEmail = users.find(u => u.email && u.email.toLowerCase() === cleanEmail.toLowerCase());
-        if (existsEmail) {
-            return res.status(400).json({ error: 'Email already registered.' });
-        }
-
-        const existsMobile = users.find(u => u.mobile && u.mobile.trim() === cleanMobile);
-        if (existsMobile) {
-            return res.status(400).json({ error: 'Mobile number already registered.' });
-        }
-
-        const newUser = { username: cleanUsername, email: cleanEmail, mobile: cleanMobile, password: cleanPassword, name: cleanName };
+        const newUser = { username: cleanUsername, email: "", mobile: "", password: cleanPassword, name: cleanUsername };
         users.push(newUser);
 
         fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf8', (writeErr) => {
             if (writeErr) return res.status(500).json({ error: 'Failed to save user' });
-            res.json({ success: true, user: { username: cleanUsername, name: cleanName, email: cleanEmail, mobile: cleanMobile } });
+            res.json({ success: true, user: { username: cleanUsername, name: cleanUsername } });
         });
     });
 });

@@ -2542,9 +2542,6 @@ function initReaderAuth() {
     if (signupForm) {
         signupForm.addEventListener("submit", (e) => {
             e.preventDefault();
-            const nameInput = document.getElementById("reader-signup-name");
-            const emailInput = document.getElementById("reader-signup-email");
-            const mobileInput = document.getElementById("reader-signup-mobile");
             const usernameInput = document.getElementById("reader-signup-user");
             const passwordInput = document.getElementById("reader-signup-pass");
             
@@ -2552,9 +2549,6 @@ function initReaderAuth() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    name: nameInput.value.trim(),
-                    email: emailInput.value.trim(),
-                    mobile: mobileInput.value.trim(),
                     username: usernameInput.value.trim(),
                     password: passwordInput.value
                 })
@@ -2562,9 +2556,6 @@ function initReaderAuth() {
             .then(res => parseJsonResponse(res, "Signup failed"))
             .then(data => {
                 showToast("Account created! Please sign in.", "success");
-                nameInput.value = "";
-                emailInput.value = "";
-                mobileInput.value = "";
                 usernameInput.value = "";
                 passwordInput.value = "";
                 
