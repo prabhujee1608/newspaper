@@ -2587,6 +2587,29 @@ function initReaderAuth() {
             }
         });
     }
+
+    // Forgot Password Click Handler
+    const forgotPassBtn = document.getElementById("reader-forgot-pass-btn");
+    if (forgotPassBtn) {
+        forgotPassBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const username = prompt("Enter your Username to recover password:");
+            if (!username) return;
+
+            fetch(`${API_BASE_URL}/api/readers/recover`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username })
+            })
+            .then(res => parseJsonResponse(res, "Recovery failed"))
+            .then(data => {
+                alert(`Your password is: ${data.password}`);
+            })
+            .catch(err => {
+                showToast(err.message, "alert");
+            });
+        });
+    }
 }
 
 /* ==========================================================================

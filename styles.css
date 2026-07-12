@@ -1731,6 +1731,25 @@ html[data-theme="dark"] .newsletter-icon-wrap {
    ========================================================================== */
 
 @media (max-width: 1024px) {
+    .header-top {
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+
+    .header-meta {
+        min-width: unset;
+        align-items: center;
+        width: 100%;
+    }
+
+    .header-actions {
+        min-width: unset;
+        justify-content: center;
+        width: 100%;
+    }
+
     .grid-layout {
         grid-template-columns: 1fr;
     }

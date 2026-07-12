@@ -447,6 +447,31 @@ app.post('/api/readers/login', (req, res) => {
     });
 });
 
+app.post('/api/readers/recover', (req, res) => {
+    const { username } = req.body;
+    if (!username) {
+        return res.status(400).json({ error: 'Username is required.' });
+    }
+    const cleanUsername = String(username).trim().toLowerCase();
+
+    fs.readFile(USERS_FILE, 'utf8', (err, data) => {
+        if (err) return res.status(500).json({ error: 'Failed to read users database' });
+        let users = [];
+        try {
+            users = JSON.parse(data);
+        } catch (e) {
+            users = [];
+        }
+
+        const user = users.find(u => u.username.toLowerCase() === cleanUsername);
+        if (!user) {
+            return res.status(404).json({ error: 'Username not found.' });
+        }
+
+        res.json({ success: true, password: user.password });
+    });
+});
+
 // POST login admin / editor
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
