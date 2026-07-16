@@ -2709,9 +2709,9 @@ function initReaderAuth() {
             .then(res => parseJsonResponse(res, "Failed to send OTP"))
             .then(data => {
                 resetEmail = email;
-                showToast(`OTP Code sent to Gmail`, "success");
+                showToast(`OTP Code sent to Email ID`, "success");
                 
-                // Render simulated phone Gmail popup notification
+                // Render simulated phone Email popup notification
                 const sms = document.createElement("div");
                 sms.className = "sms-alert-popup";
                 sms.style.cssText = `
@@ -2733,7 +2733,7 @@ function initReaderAuth() {
                 `;
                 sms.innerHTML = `
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; font-size:0.75rem; color:#bdc1c6; font-weight:bold;">
-                        <span style="display:flex; align-items:center; gap:5px;">📧 Gmail</span>
+                        <span style="display:flex; align-items:center; gap:5px;">📧 Email ID</span>
                         <span>now</span>
                     </div>
                     <div style="font-weight:bold; font-size:0.9rem; margin-bottom:4px; color:#ffffff;">

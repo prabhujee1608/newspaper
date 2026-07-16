@@ -139,14 +139,7 @@
 
                 <div id="view-feed" class="view-panel active">
                     <div id="hero-article-container"></div>
-                    <div class="feed-controls-bar" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin: 15px 0; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
-                        <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">View Mode:</span>
-                        <div class="mode-toggle-group" style="display: flex; border: 1px solid var(--border-color); border-radius: 20px; overflow: hidden; background: var(--bg-card); padding: 2px;">
-                            <button id="toggle-infinite-scroll" class="mode-toggle-btn active" style="border: none; padding: 4px 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border-radius: 20px; background: var(--accent); color: white; transition: all 0.2s ease;">Infinite Scroll</button>
-                            <button id="toggle-page-pagination" class="mode-toggle-btn" style="border: none; padding: 4px 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border-radius: 20px; background: none; color: var(--text-secondary); transition: all 0.2s ease;">Page Pagination</button>
-                        </div>
-                    </div>
-                    <div class="section-divider">
+                    <div class="section-divider" style="margin-top: 15px;">
                         <span>Latest Stories</span>
                     </div>
                     <div id="articles-grid" class="articles-grid-container"></div>
@@ -723,8 +716,8 @@
                         <input type="text" id="reader-signup-user" required placeholder="Choose username" style="width:100%; padding: 10px; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary);">
                     </div>
                     <div class="form-group">
-                        <label for="reader-signup-email" style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 5px;">Gmail Address</label>
-                        <input type="email" id="reader-signup-email" required placeholder="e.g. yourname@gmail.com" style="width:100%; padding: 10px; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary);">
+                        <label for="reader-signup-email" style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 5px;">Email ID</label>
+                        <input type="email" id="reader-signup-email" required placeholder="e.g. name@example.com" style="width:100%; padding: 10px; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary);">
                     </div>
                     <div class="form-group">
                         <label for="reader-signup-pass" style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 5px;">Password</label>
@@ -740,13 +733,13 @@
             <!-- Forgot Password Pane -->
             <div id="reader-forgot-pane" style="display: none;">
                 <h3 style="font-family: var(--font-serif); font-size: 1.5rem; color: var(--text-primary); margin-bottom: 10px; border-bottom: 2px solid var(--accent); padding-bottom: 8px; font-weight: 800;">Reset Password</h3>
-                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">Recover your account using a verified Gmail OTP code.</p>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">Recover your account using a verified Email OTP code.</p>
                 
                 <!-- Step 1: Request OTP -->
                 <form id="reader-forgot-step1-form" style="display: flex; flex-direction: column; gap: 15px;">
                     <div class="form-group">
-                        <label for="reader-forgot-gmail" style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 5px;">Registered Gmail Address</label>
-                        <input type="email" id="reader-forgot-gmail" required placeholder="e.g. yourname@gmail.com" style="width:100%; padding: 10px; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary);">
+                        <label for="reader-forgot-gmail" style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 5px;">Registered Email ID</label>
+                        <input type="email" id="reader-forgot-gmail" required placeholder="e.g. name@example.com" style="width:100%; padding: 10px; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary);">
                     </div>
                     <button type="submit" class="btn btn-primary btn-full" style="padding: 12px; margin-top: 10px; font-weight: 600; cursor: pointer;">Send OTP</button>
                 </form>

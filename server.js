@@ -397,7 +397,7 @@ app.delete('/api/news/:id', adminActionLimiter, authenticateAdmin, (req, res) =>
 app.post('/api/readers/signup', (req, res) => {
     const { username, email, password } = req.body;
     if (!username || !email || !password) {
-        return res.status(400).json({ error: 'Username, Gmail address, and password are required.' });
+        return res.status(400).json({ error: 'Username, Email ID, and password are required.' });
     }
     const cleanUsername = String(username).trim();
     const cleanEmail = String(email).trim().toLowerCase();
@@ -419,7 +419,7 @@ app.post('/api/readers/signup', (req, res) => {
 
         const existsEmail = users.find(u => u.email && u.email.trim().toLowerCase() === cleanEmail);
         if (existsEmail) {
-            return res.status(400).json({ error: 'Gmail address already registered.' });
+            return res.status(400).json({ error: 'Email ID already registered.' });
         }
 
         const newUser = { username: cleanUsername, email: cleanEmail, mobile: "", password: cleanPassword, name: cleanUsername };
@@ -476,7 +476,7 @@ app.post('/api/readers/login', (req, res) => {
 app.post('/api/readers/send-otp', (req, res) => {
     const { email } = req.body;
     if (!email) {
-        return res.status(400).json({ error: 'Gmail address is required.' });
+        return res.status(400).json({ error: 'Email ID is required.' });
     }
     const cleanEmail = String(email).trim().toLowerCase();
 
@@ -491,7 +491,7 @@ app.post('/api/readers/send-otp', (req, res) => {
 
         const user = users.find(u => u.email && u.email.toLowerCase() === cleanEmail);
         if (!user) {
-            return res.status(404).json({ error: 'No reader registered with this Gmail address.' });
+            return res.status(404).json({ error: 'No reader registered with this Email ID.' });
         }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
