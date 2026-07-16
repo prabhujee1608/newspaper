@@ -223,7 +223,20 @@ app.get('/api/news', (req, res) => {
             return res.status(500).json({ error: 'Failed to read database' });
         }
         try {
-            res.json(JSON.parse(data));
+            const articles = JSON.parse(data);
+            const now = Date.now();
+            articles.forEach(art => {
+                const readersObj = activeReaders[art.id] || {};
+                // Clean up expired ones
+                for (const cid in readersObj) {
+                    if (now - readersObj[cid] > 12000) {
+                        delete readersObj[cid];
+                    }
+                }
+                const count = Object.keys(readersObj).length;
+                art.activeViewers = Math.max(1, count);
+            });
+            res.json(articles);
         } catch (parseErr) {
             console.error("Error parsing database JSON:", parseErr);
             res.status(500).json({ error: 'Failed to parse database content' });

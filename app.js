@@ -538,6 +538,11 @@ function renderArticlesList() {
                         <span>${readTimeHero} min read</span>
                         <span>•</span>
                         <span>👁️ ${heroArticle.views || 0} views</span>
+                        <span>•</span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px; color: var(--accent); font-weight: bold; background: rgba(185, 28, 28, 0.08); padding: 1px 6px; border-radius: 4px;">
+                            <span class="live-pulse-dot" style="width: 6px; height: 6px; background: var(--accent); border-radius: 50%; display: inline-block;"></span>
+                            <span>${heroArticle.activeViewers || 1} reading</span>
+                        </span>
                     </div>
                     <h2 class="hero-headline">
                         <a href="#" class="view-article-link" data-id="${heroArticle.id}">${highlightText(heroArticle.title)}</a>
@@ -582,6 +587,11 @@ function renderArticlesList() {
                         <span>${readTime} min read</span>
                         <span>•</span>
                         <span>👁️ ${art.views || 0} views</span>
+                        <span>•</span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px; color: var(--accent); font-weight: bold; background: rgba(185, 28, 28, 0.08); padding: 1px 4px; border-radius: 4px;">
+                            <span class="live-pulse-dot" style="width: 5px; height: 5px; background: var(--accent); border-radius: 50%; display: inline-block;"></span>
+                            <span>${art.activeViewers || 1} live</span>
+                        </span>
                     </div>
                     <h3 class="card-headline">
                         <a href="#" class="view-article-link" data-id="${art.id}">${highlightText(art.title)}</a>
@@ -1099,13 +1109,11 @@ function initCommentsForm() {
     form.addEventListener("submit", (e) => {
         e.preventDefault();
         
-        if (!readerToken) {
-            showToast("Please sign in to comment", "alert");
-            return;
-        }
-
+        const authorInput = document.getElementById("comment-author");
         const textInput = document.getElementById("comment-text");
         const commentText = textInput.value.trim();
+        const authorName = (authorInput ? authorInput.value.trim() : "") || "Anonymous";
+
         if (!commentText) return;
 
         fetch(`${window.location.origin}/api/comments/${activeArticleId}`, {
@@ -1114,7 +1122,7 @@ function initCommentsForm() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                author: readerName,
+                author: authorName,
                 text: commentText
             })
         })
@@ -1141,33 +1149,22 @@ function renderComments() {
     const form = document.getElementById("comment-submit-form");
     let prompt = document.getElementById("comment-login-prompt");
 
-    if (!readerToken) {
-        form.style.display = "none";
-        if (!prompt) {
-            prompt = document.createElement("div");
-            prompt.id = "comment-login-prompt";
-            prompt.className = "comment-login-prompt";
-            prompt.innerHTML = `
-                <p>You must be signed in to post comments or replies.</p>
-                <button class="btn btn-primary" id="comment-signin-trigger" style="padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: 600;">Sign In / Sign Up</button>
-            `;
-            form.parentNode.insertBefore(prompt, form);
-            document.getElementById("comment-signin-trigger").addEventListener("click", () => {
-                document.getElementById("nav-reader-login").click();
-            });
-        } else {
-            prompt.style.display = "block";
-        }
-    } else {
-        form.style.display = "block";
-        if (prompt) prompt.style.display = "none";
-        
-        const authorInput = document.getElementById("comment-author");
-        if (authorInput) {
+    // Commenting is open to everyone
+    if (form) form.style.display = "block";
+    if (prompt) prompt.style.display = "none";
+
+    const authorInput = document.getElementById("comment-author");
+    if (authorInput) {
+        if (readerToken) {
             authorInput.value = readerName;
             authorInput.readOnly = true;
             authorInput.style.opacity = "0.7";
             authorInput.style.cursor = "not-allowed";
+        } else {
+            authorInput.value = "";
+            authorInput.readOnly = false;
+            authorInput.style.opacity = "1";
+            authorInput.style.cursor = "text";
         }
     }
 
@@ -1237,12 +1234,6 @@ function renderCommentReplies(replies) {
 }
 
 function toggleReplyForm(commentId) {
-    if (!readerToken) {
-        showToast("Please sign in to reply.", "alert");
-        document.getElementById("nav-reader-login").click();
-        return;
-    }
-
     const container = document.getElementById(`reply-container-${commentId}`);
     if (container.style.display === "block") {
         container.style.display = "none";
@@ -1250,14 +1241,19 @@ function toggleReplyForm(commentId) {
         return;
     }
 
+    const placeholderName = readerToken ? readerName : "";
+    const nameInputStyle = readerToken ? 'display: none;' : 'display: block; margin-bottom: 8px;';
+    const isReadOnly = readerToken ? 'readonly' : '';
+    const placeholderText = readerToken ? `Write reply as ${readerName}...` : "Write reply...";
+
     container.style.display = "block";
     container.innerHTML = `
         <div class="comment-form" style="padding: 12px; margin-bottom: 0; background-color: var(--bg-card);">
-            <div class="comment-form-row" style="display: none;">
-                <input type="text" id="reply-author-${commentId}" value="${readerName}" required readonly>
+            <div class="comment-form-row" style="${nameInputStyle}">
+                <input type="text" id="reply-author-${commentId}" value="${placeholderName}" ${isReadOnly} placeholder="Your Name" style="padding: 6px; font-size: 0.85rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-main); color: var(--text-primary); width:100%;">
             </div>
             <div class="comment-form-row">
-                <textarea id="reply-text-${commentId}" required rows="2" placeholder="Write reply as ${readerName}..." style="padding:6px 10px; font-size:0.8rem;"></textarea>
+                <textarea id="reply-text-${commentId}" required rows="2" placeholder="${placeholderText}" style="padding:6px 10px; font-size:0.8rem;"></textarea>
             </div>
             <button class="btn btn-primary submit-reply-btn" data-id="${commentId}" style="padding:4px 10px; font-size:0.75rem; cursor: pointer;">Post Reply</button>
         </div>
@@ -1269,9 +1265,11 @@ function toggleReplyForm(commentId) {
 }
 
 function submitReply(commentId) {
+    const authorInput = document.getElementById(`reply-author-${commentId}`);
     const textInput = document.getElementById(`reply-text-${commentId}`);
     if (!textInput) return;
     const text = textInput.value.trim();
+    const authorName = (authorInput ? authorInput.value.trim() : "") || "Anonymous";
 
     if (!text) return;
 
@@ -1281,7 +1279,7 @@ function submitReply(commentId) {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            author: readerName,
+            author: authorName,
             text: text,
             parentCommentId: commentId
         })
@@ -2714,8 +2712,54 @@ function initReaderAuth() {
             .then(res => parseJsonResponse(res, "Failed to send OTP"))
             .then(data => {
                 resetUsername = username;
-                showToast(`OTP Code sent (Simulated OTP: ${data.otp})`, "success");
-                alert(`[SIMULATION] Your 6-digit OTP code is: ${data.otp}`);
+                showToast(`OTP Code sent to ${mobile}`, "success");
+                
+                // Render simulated phone SMS popup
+                const sms = document.createElement("div");
+                sms.className = "sms-alert-popup";
+                sms.style.cssText = `
+                    position: fixed;
+                    top: 25px;
+                    right: 25px;
+                    width: 320px;
+                    background: #1c1c1e;
+                    color: #ffffff;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    padding: 15px;
+                    z-index: 10000;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                    transform: translateY(-50px);
+                    opacity: 0;
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                `;
+                sms.innerHTML = `
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; font-size:0.75rem; color:#8e8e93; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">
+                        <span>💬 Messages</span>
+                        <span>now</span>
+                    </div>
+                    <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px; color:#ffffff;">
+                        Jan Jagriti Network OTP
+                    </div>
+                    <div style="font-size:0.85rem; color:#e5e5ea; line-height:1.4;">
+                        Your OTP is: <strong style="color:var(--accent); font-size: 1.1rem; letter-spacing: 2px;">${data.otp}</strong>. Valid for 10 minutes.
+                    </div>
+                `;
+                document.body.appendChild(sms);
+                
+                setTimeout(() => {
+                    sms.style.transform = "translateY(0)";
+                    sms.style.opacity = "1";
+                }, 100);
+
+                setTimeout(() => {
+                    sms.style.transform = "translateY(-50px)";
+                    sms.style.opacity = "0";
+                    setTimeout(() => {
+                        sms.remove();
+                    }, 400);
+                }, 10000);
                 
                 forgotStep1Form.style.display = "none";
                 forgotStep2Form.style.display = "flex";
