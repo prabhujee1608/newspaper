@@ -395,12 +395,12 @@ app.delete('/api/news/:id', adminActionLimiter, authenticateAdmin, (req, res) =>
 });
 
 app.post('/api/readers/signup', (req, res) => {
-    const { username, mobile, password } = req.body;
-    if (!username || !mobile || !password) {
-        return res.status(400).json({ error: 'Username, mobile number, and password are required.' });
+    const { username, email, password } = req.body;
+    if (!username || !email || !password) {
+        return res.status(400).json({ error: 'Username, Gmail address, and password are required.' });
     }
     const cleanUsername = String(username).trim();
-    const cleanMobile = String(mobile).trim();
+    const cleanEmail = String(email).trim().toLowerCase();
     const cleanPassword = String(password);
 
     fs.readFile(USERS_FILE, 'utf8', (err, data) => {
@@ -417,12 +417,12 @@ app.post('/api/readers/signup', (req, res) => {
             return res.status(400).json({ error: 'Username already taken.' });
         }
 
-        const existsMobile = users.find(u => u.mobile && u.mobile.trim() === cleanMobile);
-        if (existsMobile) {
-            return res.status(400).json({ error: 'Mobile number already registered.' });
+        const existsEmail = users.find(u => u.email && u.email.trim().toLowerCase() === cleanEmail);
+        if (existsEmail) {
+            return res.status(400).json({ error: 'Gmail address already registered.' });
         }
 
-        const newUser = { username: cleanUsername, email: "", mobile: cleanMobile, password: cleanPassword, name: cleanUsername };
+        const newUser = { username: cleanUsername, email: cleanEmail, mobile: "", password: cleanPassword, name: cleanUsername };
         users.push(newUser);
 
         fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf8', (writeErr) => {
@@ -474,12 +474,11 @@ app.post('/api/readers/login', (req, res) => {
 });
 
 app.post('/api/readers/send-otp', (req, res) => {
-    const { username, mobile } = req.body;
-    if (!username || !mobile) {
-        return res.status(400).json({ error: 'Username and mobile number are required.' });
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ error: 'Gmail address is required.' });
     }
-    const cleanUsername = String(username).trim().toLowerCase();
-    const cleanMobile = String(mobile).trim();
+    const cleanEmail = String(email).trim().toLowerCase();
 
     fs.readFile(USERS_FILE, 'utf8', (err, data) => {
         if (err) return res.status(500).json({ error: 'Failed to read users database' });
@@ -490,26 +489,26 @@ app.post('/api/readers/send-otp', (req, res) => {
             users = [];
         }
 
-        const user = users.find(u => u.username.toLowerCase() === cleanUsername && u.mobile === cleanMobile);
+        const user = users.find(u => u.email && u.email.toLowerCase() === cleanEmail);
         if (!user) {
-            return res.status(404).json({ error: 'Username or mobile number is incorrect.' });
+            return res.status(404).json({ error: 'No reader registered with this Gmail address.' });
         }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        activeOtps[cleanUsername] = otp;
+        activeOtps[cleanEmail] = otp;
 
-        res.json({ success: true, otp, message: `Simulated OTP sent to ${cleanMobile}` });
+        res.json({ success: true, otp, message: `Simulated OTP sent to ${cleanEmail}` });
     });
 });
 
 app.post('/api/readers/reset-password', (req, res) => {
-    const { username, otp, newPassword } = req.body;
-    if (!username || !otp || !newPassword) {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
         return res.status(400).json({ error: 'All fields are required.' });
     }
-    const cleanUsername = String(username).trim().toLowerCase();
+    const cleanEmail = String(email).trim().toLowerCase();
 
-    if (activeOtps[cleanUsername] !== String(otp)) {
+    if (activeOtps[cleanEmail] !== String(otp)) {
         return res.status(400).json({ error: 'Invalid OTP code.' });
     }
 
@@ -522,7 +521,7 @@ app.post('/api/readers/reset-password', (req, res) => {
             users = [];
         }
 
-        const userIndex = users.findIndex(u => u.username.toLowerCase() === cleanUsername);
+        const userIndex = users.findIndex(u => u.email && u.email.toLowerCase() === cleanEmail);
         if (userIndex === -1) {
             return res.status(404).json({ error: 'User not found.' });
         }
@@ -531,7 +530,7 @@ app.post('/api/readers/reset-password', (req, res) => {
 
         fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf8', (wErr) => {
             if (wErr) return res.status(500).json({ error: 'Failed to save new password' });
-            delete activeOtps[cleanUsername];
+            delete activeOtps[cleanEmail];
             res.json({ success: true });
         });
     });

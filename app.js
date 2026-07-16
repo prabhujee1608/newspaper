@@ -2551,7 +2551,7 @@ function initReaderAuth() {
     const forgotStep1Form = document.getElementById("reader-forgot-step1-form");
     const forgotStep2Form = document.getElementById("reader-forgot-step2-form");
 
-    let resetUsername = ""; // Holds username between Step 1 and Step 2
+    let resetEmail = ""; // Holds email between Step 1 and Step 2
 
     const updateReaderHeaderUI = () => {
         if (readerToken) {
@@ -2668,7 +2668,7 @@ function initReaderAuth() {
         signupForm.addEventListener("submit", (e) => {
             e.preventDefault();
             const usernameInput = document.getElementById("reader-signup-user");
-            const mobileInput = document.getElementById("reader-signup-mobile");
+            const emailInput = document.getElementById("reader-signup-email");
             const passwordInput = document.getElementById("reader-signup-pass");
             
             fetch(`${API_BASE_URL}/api/readers/signup`, {
@@ -2676,7 +2676,7 @@ function initReaderAuth() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     username: usernameInput.value.trim(),
-                    mobile: mobileInput.value.trim(),
+                    email: emailInput.value.trim(),
                     password: passwordInput.value
                 })
             })
@@ -2684,7 +2684,7 @@ function initReaderAuth() {
             .then(data => {
                 showToast("Account created! Please sign in.", "success");
                 usernameInput.value = "";
-                mobileInput.value = "";
+                emailInput.value = "";
                 passwordInput.value = "";
                 showPane(loginPane);
             })
@@ -2698,52 +2698,49 @@ function initReaderAuth() {
     if (forgotStep1Form) {
         forgotStep1Form.addEventListener("submit", (e) => {
             e.preventDefault();
-            const usernameInput = document.getElementById("reader-forgot-user");
-            const mobileInput = document.getElementById("reader-forgot-mobile");
-
-            const username = usernameInput.value.trim();
-            const mobile = mobileInput.value.trim();
+            const emailInput = document.getElementById("reader-forgot-gmail");
+            const email = emailInput.value.trim();
 
             fetch(`${API_BASE_URL}/api/readers/send-otp`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, mobile })
+                body: JSON.stringify({ email })
             })
             .then(res => parseJsonResponse(res, "Failed to send OTP"))
             .then(data => {
-                resetUsername = username;
-                showToast(`OTP Code sent to ${mobile}`, "success");
+                resetEmail = email;
+                showToast(`OTP Code sent to Gmail`, "success");
                 
-                // Render simulated phone SMS popup
+                // Render simulated phone Gmail popup notification
                 const sms = document.createElement("div");
                 sms.className = "sms-alert-popup";
                 sms.style.cssText = `
                     position: fixed;
                     top: 25px;
                     right: 25px;
-                    width: 320px;
-                    background: #1c1c1e;
+                    width: 330px;
+                    background: #202124;
                     color: #ffffff;
-                    border-radius: 12px;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                    border-radius: 8px;
+                    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
                     border: 1px solid rgba(255,255,255,0.1);
-                    padding: 15px;
+                    padding: 16px;
                     z-index: 10000;
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                    font-family: Roboto, Arial, sans-serif;
                     transform: translateY(-50px);
                     opacity: 0;
                     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                 `;
                 sms.innerHTML = `
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; font-size:0.75rem; color:#8e8e93; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">
-                        <span>💬 Messages</span>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; font-size:0.75rem; color:#bdc1c6; font-weight:bold;">
+                        <span style="display:flex; align-items:center; gap:5px;">📧 Gmail</span>
                         <span>now</span>
                     </div>
-                    <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px; color:#ffffff;">
+                    <div style="font-weight:bold; font-size:0.9rem; margin-bottom:4px; color:#ffffff;">
                         Jan Jagriti Network OTP
                     </div>
-                    <div style="font-size:0.85rem; color:#e5e5ea; line-height:1.4;">
-                        Your OTP is: <strong style="color:var(--accent); font-size: 1.1rem; letter-spacing: 2px;">${data.otp}</strong>. Valid for 10 minutes.
+                    <div style="font-size:0.85rem; color:#e8eaed; line-height:1.4;">
+                        Verify code: <strong style="color:var(--accent); font-size:1.1rem; letter-spacing:2px;">${data.otp}</strong>.
                     </div>
                 `;
                 document.body.appendChild(sms);
@@ -2764,8 +2761,7 @@ function initReaderAuth() {
                 forgotStep1Form.style.display = "none";
                 forgotStep2Form.style.display = "flex";
                 
-                usernameInput.value = "";
-                mobileInput.value = "";
+                emailInput.value = "";
             })
             .catch(err => {
                 showToast(err.message, "alert");
@@ -2786,7 +2782,7 @@ function initReaderAuth() {
             fetch(`${API_BASE_URL}/api/readers/reset-password`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username: resetUsername, otp, newPassword })
+                body: JSON.stringify({ email: resetEmail, otp, newPassword })
             })
             .then(res => parseJsonResponse(res, "Failed to reset password"))
             .then(data => {
@@ -2795,7 +2791,7 @@ function initReaderAuth() {
                 
                 otpInput.value = "";
                 newpassInput.value = "";
-                resetUsername = "";
+                resetEmail = "";
             })
             .catch(err => {
                 showToast(err.message, "alert");
