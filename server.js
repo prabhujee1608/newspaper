@@ -255,6 +255,8 @@ app.post('/api/news', adminActionLimiter, authenticateAdmin, (req, res) => {
     newArticle.tag = String(newArticle.category).toUpperCase();
     newArticle.trending = req.body.trending === true;
     newArticle.date = newArticle.date || new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    newArticle.isAdminNews = true;
+    newArticle.publishedByAdmin = true;
 
     const validCategories = ['politics', 'world', 'technology', 'sports', 'finance', 'entertainment', 'environment', 'lifestyle', 'india'];
     if (!validCategories.includes(newArticle.category)) {
@@ -329,7 +331,9 @@ app.put('/api/news/:id', adminActionLimiter, authenticateAdmin, (req, res) => {
             abstract: String(updatedArticle.abstract || '').trim().substring(0, 150),
             image: String(updatedArticle.image || 'assets/tech.png').trim(),
             tag: String(updatedArticle.category).toUpperCase(),
-            trending: updatedArticle.trending === true
+            trending: updatedArticle.trending === true,
+            isAdminNews: true,
+            publishedByAdmin: true
         };
 
         fs.writeFile(DB_FILE, JSON.stringify(articles, null, 2), 'utf8', (writeErr) => {

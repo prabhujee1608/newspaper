@@ -105,7 +105,10 @@ const CITY_COORDINATES = {
     bengaluru: { name: "Bengaluru, IND", lat: 12.9716, lon: 77.5946 },
     kolkata: { name: "Kolkata, IND", lat: 22.5726, lon: 88.3639 },
     chennai: { name: "Chennai, IND", lat: 13.0827, lon: 80.2707 },
-    hyderabad: { name: "Hyderabad, IND", lat: 17.3850, lon: 78.4867 }
+    hyderabad: { name: "Hyderabad, IND", lat: 17.3850, lon: 78.4867 },
+    london: { name: "London, UK", lat: 51.5074, lon: -0.1278 },
+    new_york: { name: "New York, USA", lat: 40.7128, lon: -74.0060 },
+    tokyo: { name: "Tokyo, JPN", lat: 35.6762, lon: 139.6503 }
 };
 
 // Stock Markets List State
@@ -466,7 +469,15 @@ function renderArticlesList() {
 
     // Apply category filter
     if (currentCategory !== "all") {
-        filtered = filtered.filter(art => art.category.toLowerCase() === currentCategory.toLowerCase());
+        filtered = filtered.filter(art => 
+            art.category.toLowerCase() === currentCategory.toLowerCase() ||
+            art.isAdminNews === true ||
+            art.publishedByAdmin === true ||
+            art.author === "Admin" ||
+            art.author === "Omkar Nath Prabhujee" ||
+            art.author === "Prabhujee" ||
+            art.author === "Omkar Nath Prabhujee (omkarnathprabhujee16)"
+        );
     }
 
     // Apply search query filter
@@ -510,11 +521,14 @@ function renderArticlesList() {
     if (paginationMode === "infinite" || currentPage === 1) {
         const readTimeHero = Math.ceil(heroArticle.content.replace(/<[^>]*>/g, '').split(/\s+/).length / 200);
         const isHeroBookmarked = bookmarks.includes(heroArticle.id);
+        const isHeroAdmin = heroArticle.isAdminNews === true || heroArticle.publishedByAdmin === true || heroArticle.author === "Admin" || heroArticle.author === "Omkar Nath Prabhujee" || heroArticle.author === "Prabhujee";
+        const adminBadgeHTML = isHeroAdmin ? `<span class="badge badge-admin hero-meta-badge" style="background: var(--accent); color: #fff; margin-left: 8px;">📌 Admin Post</span>` : '';
         heroContainer.style.display = "block";
         heroContainer.innerHTML = `
             <div class="hero-card" data-id="${heroArticle.id}">
                 <div class="hero-img-wrap">
                     <span class="badge badge-${heroArticle.category} hero-meta-badge">${heroArticle.category}</span>
+                    ${adminBadgeHTML}
                     <img src="${heroArticle.image}" alt="${heroArticle.title}">
                 </div>
                 <div class="hero-details">
@@ -551,11 +565,14 @@ function renderArticlesList() {
     gridArticles.forEach(art => {
         const readTime = Math.ceil(art.content.replace(/<[^>]*>/g, '').split(/\s+/).length / 200);
         const isBookmarked = bookmarks.includes(art.id);
+        const isArtAdmin = art.isAdminNews === true || art.publishedByAdmin === true || art.author === "Admin" || art.author === "Omkar Nath Prabhujee" || art.author === "Prabhujee";
+        const artAdminBadgeHTML = isArtAdmin ? `<span class="badge badge-admin card-badge" style="left: auto; right: 10px; background: var(--accent); color: #fff; border: 1px solid rgba(255,255,255,0.2);">📌 Admin Post</span>` : '';
         
         gridHTML += `
             <div class="news-card" data-id="${art.id}">
                 <div class="card-img-wrap">
                     <span class="badge badge-${art.category} card-badge">${art.category}</span>
+                    ${artAdminBadgeHTML}
                     <img src="${art.image}" alt="${art.title}">
                 </div>
                 <div class="card-details">
@@ -1426,7 +1443,9 @@ function initAdminPanel() {
                 image: imageUrl || "assets/tech.png",
                 tag: category.toUpperCase(),
                 trending: false,
-                content: content
+                content: content,
+                isAdminNews: true,
+                publishedByAdmin: true
             };
 
             // Send to backend
@@ -1833,6 +1852,48 @@ function getWeatherDetailsFromCode(code) {
     return { desc: "Mild Conditions", icon: "sun" };
 }
 
+let weatherUnit = localStorage.getItem("weather_unit") || "C";
+
+function getConvertedTempString(celsiusVal) {
+    if (weatherUnit === "F") {
+        const fahrenheit = Math.round((celsiusVal * 9 / 5) + 32);
+        return `${fahrenheit}°F`;
+    }
+    return `${celsiusVal}°C`;
+}
+
+function getWeatherAdvisory(icon) {
+    switch (icon) {
+        case "sun":
+            return { text: "☀️ Sunny day! Stay hydrated & wear sunscreen.", color: "var(--gold)", bg: "rgba(226, 177, 60, 0.1)" };
+        case "cloudy":
+            return { text: "☁️ Overcast skies. A nice day for a stroll.", color: "var(--text-muted)", bg: "rgba(160, 174, 192, 0.1)" };
+        case "rain":
+            return { text: "☔ Rainy weather. Don't forget your umbrella today!", color: "var(--accent)", bg: "rgba(229, 62, 62, 0.1)" };
+        default:
+            return { text: "🌤️ Mild conditions. Enjoy the weather!", color: "var(--success)", bg: "rgba(56, 161, 105, 0.1)" };
+    }
+}
+
+function updateDisplayedWeatherUnit() {
+    const tempEl = document.getElementById("weather-detail-temp");
+    const headerWeatherEl = document.getElementById("weather-summary");
+    if (tempEl) {
+        const c = parseFloat(tempEl.getAttribute("data-celsius"));
+        if (!isNaN(c)) {
+            tempEl.textContent = getConvertedTempString(c);
+        }
+    }
+    if (headerWeatherEl) {
+        const c = parseFloat(headerWeatherEl.getAttribute("data-celsius"));
+        const cityName = headerWeatherEl.getAttribute("data-city");
+        const desc = headerWeatherEl.getAttribute("data-desc");
+        if (!isNaN(c) && cityName && desc) {
+            headerWeatherEl.textContent = `${cityName}, ${getConvertedTempString(c)} ${desc}`;
+        }
+    }
+}
+
 async function fetchLiveWeather(lat, lon, cityName) {
     const tempEl = document.getElementById("weather-detail-temp");
     const descEl = document.getElementById("weather-detail-desc");
@@ -1840,6 +1901,7 @@ async function fetchLiveWeather(lat, lon, cityName) {
     const windEl = document.getElementById("weather-detail-wind");
     const headerWeatherEl = document.getElementById("weather-summary");
     const iconContainer = document.getElementById("weather-detail-icon");
+    const tipEl = document.getElementById("weather-detail-tip");
 
     if (descEl) descEl.textContent = "Updating...";
 
@@ -1858,15 +1920,34 @@ async function fetchLiveWeather(lat, lon, cityName) {
             const weatherInfo = getWeatherDetailsFromCode(code);
             
             // Update UI
-            if (tempEl) tempEl.textContent = `${temp}°C`;
+            if (tempEl) {
+                tempEl.setAttribute("data-celsius", temp);
+                tempEl.textContent = getConvertedTempString(temp);
+                tempEl.style.cursor = "pointer";
+                tempEl.title = "Click to toggle °C / °F";
+            }
             if (descEl) descEl.textContent = weatherInfo.desc;
             if (humidityEl) humidityEl.textContent = `${humidity}%`;
             if (windEl) windEl.textContent = `${windSpeed} km/h`;
             if (headerWeatherEl) {
-                headerWeatherEl.textContent = `${cityName}, ${temp}°C ${weatherInfo.desc}`;
+                headerWeatherEl.setAttribute("data-celsius", temp);
+                headerWeatherEl.setAttribute("data-city", cityName);
+                headerWeatherEl.setAttribute("data-desc", weatherInfo.desc);
+                headerWeatherEl.textContent = `${cityName}, ${getConvertedTempString(temp)} ${weatherInfo.desc}`;
+                headerWeatherEl.style.cursor = "pointer";
+                headerWeatherEl.title = "Click to toggle °C / °F";
             }
             if (iconContainer) {
                 iconContainer.innerHTML = getWeatherSVG(weatherInfo.icon);
+            }
+
+            // Update recommendation tip
+            if (tipEl) {
+                const advisory = getWeatherAdvisory(weatherInfo.icon);
+                tipEl.textContent = advisory.text;
+                tipEl.style.borderLeftColor = advisory.color;
+                tipEl.style.backgroundColor = advisory.bg;
+                tipEl.style.display = "block";
             }
 
             // Update Sunrise/Sunset
@@ -1900,12 +1981,27 @@ async function fetchLiveWeather(lat, lon, cityName) {
 function initWeatherWidget() {
     const citySelector = document.getElementById("weather-city-selector");
     const locBtn = document.getElementById("weather-location-btn");
+    const tempEl = document.getElementById("weather-detail-temp");
+    const headerWeatherEl = document.getElementById("weather-summary");
 
     const loadCityWeather = (cityKey) => {
         const cityData = CITY_COORDINATES[cityKey];
         if (!cityData) return;
         fetchLiveWeather(cityData.lat, cityData.lon, cityData.name.split(',')[0]);
     };
+
+    const toggleUnit = () => {
+        weatherUnit = weatherUnit === "C" ? "F" : "C";
+        localStorage.setItem("weather_unit", weatherUnit);
+        updateDisplayedWeatherUnit();
+    };
+
+    if (tempEl) {
+        tempEl.addEventListener("click", toggleUnit);
+    }
+    if (headerWeatherEl) {
+        headerWeatherEl.addEventListener("click", toggleUnit);
+    }
 
     if (citySelector) {
         citySelector.addEventListener("change", (e) => {

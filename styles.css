@@ -291,6 +291,10 @@ button {
     background-color: #be185d;
 }
 
+.badge-admin {
+    background-color: var(--accent);
+}
+
 /* SVG Icons Helper */
 .icon {
     width: 18px;
@@ -2389,4 +2393,18 @@ html[data-theme="dark"] .newsletter-icon-wrap {
     padding: 10px 15px;
     font-size: 0.85rem;
     color: var(--text-secondary);
+}
+
+/* Weather Suggestion Box styling */
+.weather-suggestion {
+    font-size: 0.8rem;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    margin-top: 5px;
+    font-weight: 500;
+    text-align: center;
+    border-left: 3px solid;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    transition: all var(--transition-normal);
 }
