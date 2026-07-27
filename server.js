@@ -64,19 +64,34 @@ function authenticateAdmin(req, res, next) {
     }
 }
 
+const localDb = path.join(__dirname, 'database.json');
+const localUsers = path.join(__dirname, 'users.json');
+const localComments = path.join(__dirname, 'comments.json');
+const localStats = path.join(__dirname, 'stats.json');
+const localLogins = path.join(__dirname, 'logins.json');
+
+// Helper to initialize files, copying from project root if running on Vercel
+function initDatabaseFile(targetPath, sourcePath, defaultData) {
+    if (!fs.existsSync(targetPath)) {
+        if (isVercel && fs.existsSync(sourcePath)) {
+            try {
+                fs.copyFileSync(sourcePath, targetPath);
+                console.log(`Copied ${sourcePath} to Vercel tmp: ${targetPath}`);
+            } catch (err) {
+                console.error(`Error copying ${sourcePath} to ${targetPath}:`, err);
+                fs.writeFileSync(targetPath, JSON.stringify(defaultData, null, 2), 'utf8');
+            }
+        } else {
+            fs.writeFileSync(targetPath, JSON.stringify(defaultData, null, 2), 'utf8');
+        }
+    }
+}
+
 // Initialize users and comments database files
-if (!fs.existsSync(USERS_FILE)) {
-    fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2), 'utf8');
-}
-if (!fs.existsSync(COMMENTS_FILE)) {
-    fs.writeFileSync(COMMENTS_FILE, JSON.stringify({}, null, 2), 'utf8');
-}
-if (!fs.existsSync(STATS_FILE)) {
-    fs.writeFileSync(STATS_FILE, JSON.stringify({ totalLogins: 0 }, null, 2), 'utf8');
-}
-if (!fs.existsSync(LOGINS_FILE)) {
-    fs.writeFileSync(LOGINS_FILE, JSON.stringify([], null, 2), 'utf8');
-}
+initDatabaseFile(USERS_FILE, localUsers, []);
+initDatabaseFile(COMMENTS_FILE, localComments, {});
+initDatabaseFile(STATS_FILE, localStats, { totalLogins: 0 });
+initDatabaseFile(LOGINS_FILE, localLogins, []);
 
 function incrementLoginCount() {
     try {
@@ -112,9 +127,7 @@ function logLoginAttempt(identifier, status, ip) {
     }
 }
 
-// Initialize database file with premium seed articles if it doesn't exist
-if (!fs.existsSync(DB_FILE)) {
-    const defaultArticles = [
+const defaultArticles = [
         {
             id: "art-1",
             title: "Global Climate Summit Reaches Historic Clean Energy Pact",
@@ -212,8 +225,8 @@ if (!fs.existsSync(DB_FILE)) {
             `
         }
     ];
-    fs.writeFileSync(DB_FILE, JSON.stringify(defaultArticles, null, 2), 'utf8');
-}
+
+initDatabaseFile(DB_FILE, localDb, defaultArticles);
 
 // GET articles
 app.get('/api/news', (req, res) => {

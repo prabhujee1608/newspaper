@@ -86,7 +86,23 @@ async function fetchLocalPublisherNews() {
             localStorage.setItem("the_chronicle_articles", JSON.stringify(articles));
         }
     } catch (err) {
-        console.warn("Backend fetch failed, using local offline news cache:", err);
+        console.warn("Backend fetch failed, trying static database.json fallback:", err);
+        try {
+            const staticResponse = await fetch("database.json");
+            if (staticResponse.ok) {
+                const data = await staticResponse.json();
+                if (data && Array.isArray(data)) {
+                    articles = data;
+                    localStorage.setItem("the_chronicle_articles", JSON.stringify(articles));
+                    renderArticlesList();
+                    renderTrendingList();
+                    return;
+                }
+            }
+        } catch (staticErr) {
+            console.warn("Static database.json fetch failed:", staticErr);
+        }
+
         const cached = localStorage.getItem("the_chronicle_articles");
         if (cached) {
             articles = JSON.parse(cached);
